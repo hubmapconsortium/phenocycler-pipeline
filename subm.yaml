@@ -1,0 +1,11 @@
+#example of submission file
+#segmentation cellpose or deepcell
+segmentation_method: "deepcell"
+# comma separated list of gpu ids, e.g. "0,1,2"
+gpus: "0"
+data_dir:
+  class: Directory
+  path: "/path/to/dir/with/region_dirs/"
+meta_path:
+  class: File
+  path: "some/path/meta.yaml"

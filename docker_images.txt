@@ -1,0 +1,3 @@
+hubmap/celldive-scripts	dockerfiles/Dockerfile_celldive-scripts
+hubmap/segmentations	dockerfiles/Dockerfile_segmentations
+
