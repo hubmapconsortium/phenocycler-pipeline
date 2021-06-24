@@ -1,13 +1,56 @@
 import argparse
 import shutil
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Dict
 
 import dask
-from utils import make_dir_if_not_exists, read_pipeline_config
+import numpy as np
+import tifffile as tif
+from utils import (
+    make_dir_if_not_exists,
+    path_to_str,
+    read_pipeline_config,
+    strip_namespace,
+)
+
+Image = np.ndarray
+
+
+def replace_dim_order_in_ome(xml_str: str):
+    new_dim_order = "XYZCT"
+    ome_xml = strip_namespace(xml_str)
+    ome_xml.set("xmlns", "http://www.openmicroscopy.org/Schemas/OME/2016-06")
+    px_node = ome_xml.find("Image").find("Pixels")
+    px_node.set("DimensionOrder", new_dim_order)
+    new_xml_str = ET.tostring(ome_xml).decode("ascii")
+    res = '<?xml version="1.0" encoding="utf-8"?>\n' + new_xml_str
+    return res
+
+
+def add_z_axis(img_stack: Image):
+    stack_shape = img_stack.shape
+    new_stack_shape = [stack_shape[0], 1, stack_shape[1], stack_shape[2]]
+    return img_stack.reshape(new_stack_shape)
+
+
+def modify_and_save_img(img_path: Path, out_path: Path):
+    with tif.TiffFile(path_to_str(img_path)) as TF:
+        ome_meta = TF.ome_metadata
+        img_stack = TF.series[0].asarray()
+    new_img_stack = add_z_axis(img_stack)
+    new_ome_meta = replace_dim_order_in_ome(ome_meta)
+    with tif.TiffWriter(path_to_str(out_path), bigtiff=True) as TW:
+        TW.write(
+            new_img_stack,
+            contiguous=True,
+            photometric="minisblack",
+            description=new_ome_meta,
+        )
 
 
 def copy_files(
+    file_type: str,
     data_dir: Path,
     dir_name: str,
     img_name_template: str,
@@ -24,7 +67,10 @@ def copy_files(
             / dir_name
             / out_name_template.format(region=region, slice_name=img_slice_name)
         )
-        shutil.copy(src, dst)
+        if file_type == "mask":
+            shutil.copy(src, dst)
+        elif file_type == "expr":
+            modify_and_save_img(src, dst)
         print("region:", region, "| src:", src, "| dst:", dst)
 
 
@@ -39,6 +85,7 @@ def collect_segm_masks(
         dir_name = dir_name_template.format(region=region)
         make_dir_if_not_exists(out_dir / dir_name)
         task = dask.delayed(copy_files)(
+            "mask",
             data_dir,
             dir_name,
             img_name_template,
@@ -60,6 +107,7 @@ def collect_expr(data_dir: Path, listing: dict, out_dir: Path):
         dir_name = dir_name_template.format(region=region)
         make_dir_if_not_exists(out_dir / dir_name)
         task = dask.delayed(copy_files)(
+            "expr",
             data_dir,
             dir_name,
             img_name_template,
