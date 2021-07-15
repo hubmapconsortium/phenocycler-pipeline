@@ -4,7 +4,7 @@ label: Run segmentation
 
 hints:
   DockerRequirement:
-    dockerPull: hubmap/segmentations:latest
+    dockerPull: hubmap/segmentations:1.0
     dockerOutputDirectory: "/output"
   DockerGpuRequirement: {}
 
