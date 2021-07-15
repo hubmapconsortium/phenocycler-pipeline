@@ -1,3 +1,1 @@
-hubmap/celldive-scripts	dockerfiles/Dockerfile_celldive-scripts
-hubmap/segmentations	dockerfiles/Dockerfile_segmentations
-
+hubmap/celldive-scripts	dockerfiles/Dockerfile_celldive-scripts	base_directory_build
