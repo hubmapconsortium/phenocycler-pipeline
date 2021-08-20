@@ -7,6 +7,8 @@ hints:
     dockerPull: hubmap/segmentations:1.0.1
     dockerOutputDirectory: "/output"
   DockerGpuRequirement: {}
+  NetworkAccess:
+    networkAccess: true
 
 baseCommand: ["python", "/opt/main.py"]
 
