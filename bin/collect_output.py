@@ -1,5 +1,6 @@
 import argparse
 import shutil
+import unicodedata
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Dict
@@ -17,12 +18,34 @@ from utils import (
 Image = np.ndarray
 
 
-def replace_dim_order_in_ome(xml_str: str):
+def convert_um_to_nm(px_node: ET.Element):
+    unit_x = px_node.get("PhysicalSizeXUnit", None)
+    unit_y = px_node.get("PhysicalSizeYUnit", None)
+    size_x = px_node.get("PhysicalSizeX", None)
+    size_y = px_node.get("PhysicalSizeY", None)
+    um = unicodedata.normalize("NFKC", "μm")
+    if size_x is None or size_y is None:
+        print("Could not find physical pixel size in OMEXML")
+        return
+    if unit_x is None or unit_y is None:
+        print("Could not find physical unit in OMEXML")
+        return
+    else:
+        if unicodedata.normalize("NFKC", unit_x) == um or unit_x == "&#181;m":
+            px_node.set("PhysicalSizeXUnit", "nm")
+            px_node.set("PhysicalSizeX", str(float(size_x) * 1000))
+        if unicodedata.normalize("NFKC", unit_y) == um or unit_y == "&#181;m":
+            px_node.set("PhysicalSizeYUnit", "nm")
+            px_node.set("PhysicalSizeY", str(float(size_y) * 1000))
+
+
+def modify_initial_ome_meta(xml_str: str):
     new_dim_order = "XYZCT"
-    ome_xml = strip_namespace(xml_str)
+    ome_xml: ET.Element = strip_namespace(xml_str)
     ome_xml.set("xmlns", "http://www.openmicroscopy.org/Schemas/OME/2016-06")
     px_node = ome_xml.find("Image").find("Pixels")
     px_node.set("DimensionOrder", new_dim_order)
+    convert_um_to_nm(px_node)
     new_xml_str = ET.tostring(ome_xml).decode("ascii")
     res = '<?xml version="1.0" encoding="utf-8"?>\n' + new_xml_str
     return res
@@ -39,7 +62,7 @@ def modify_and_save_img(img_path: Path, out_path: Path):
         ome_meta = TF.ome_metadata
         img_stack = TF.series[0].asarray()
     new_img_stack = add_z_axis(img_stack)
-    new_ome_meta = replace_dim_order_in_ome(ome_meta)
+    new_ome_meta = modify_initial_ome_meta(ome_meta)
     with tif.TiffWriter(path_to_str(out_path), bigtiff=True) as TW:
         TW.write(
             new_img_stack,
@@ -62,9 +85,8 @@ def copy_files(
     for img_slice_name, slice_path in slices.items():
         img_name = img_name_template.format(region=region, slice_name=img_slice_name)
         src = src_data_dir / src_dir_name / img_name
-        dst = (
-            out_dir
-            / out_name_template.format(region=region, slice_name=img_slice_name)
+        dst = out_dir / out_name_template.format(
+            region=region, slice_name=img_slice_name
         )
         if file_type == "mask":
             shutil.copy(src, dst)
