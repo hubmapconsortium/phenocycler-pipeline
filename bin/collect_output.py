@@ -1,54 +1,15 @@
 import argparse
 import shutil
-import unicodedata
-import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Dict
 
 import dask
 import numpy as np
 import tifffile as tif
-from utils import (
-    make_dir_if_not_exists,
-    path_to_str,
-    read_pipeline_config,
-    strip_namespace,
-)
+from utils import make_dir_if_not_exists, path_to_str, read_pipeline_config
+from utils_ome import modify_initial_ome_meta
 
 Image = np.ndarray
-
-
-def convert_um_to_nm(px_node: ET.Element):
-    unit_x = px_node.get("PhysicalSizeXUnit", None)
-    unit_y = px_node.get("PhysicalSizeYUnit", None)
-    size_x = px_node.get("PhysicalSizeX", None)
-    size_y = px_node.get("PhysicalSizeY", None)
-    um = unicodedata.normalize("NFKC", "μm")
-    if size_x is None or size_y is None:
-        print("Could not find physical pixel size in OMEXML")
-        return
-    if unit_x is None or unit_y is None:
-        print("Could not find physical unit in OMEXML")
-        return
-    else:
-        if unicodedata.normalize("NFKC", unit_x) == um or unit_x == "&#181;m":
-            px_node.set("PhysicalSizeXUnit", "nm")
-            px_node.set("PhysicalSizeX", str(float(size_x) * 1000))
-        if unicodedata.normalize("NFKC", unit_y) == um or unit_y == "&#181;m":
-            px_node.set("PhysicalSizeYUnit", "nm")
-            px_node.set("PhysicalSizeY", str(float(size_y) * 1000))
-
-
-def modify_initial_ome_meta(xml_str: str):
-    new_dim_order = "XYZCT"
-    ome_xml: ET.Element = strip_namespace(xml_str)
-    ome_xml.set("xmlns", "http://www.openmicroscopy.org/Schemas/OME/2016-06")
-    px_node = ome_xml.find("Image").find("Pixels")
-    px_node.set("DimensionOrder", new_dim_order)
-    convert_um_to_nm(px_node)
-    new_xml_str = ET.tostring(ome_xml).decode("ascii")
-    res = '<?xml version="1.0" encoding="utf-8"?>\n' + new_xml_str
-    return res
 
 
 def add_z_axis(img_stack: Image):
@@ -57,12 +18,14 @@ def add_z_axis(img_stack: Image):
     return img_stack.reshape(new_stack_shape)
 
 
-def modify_and_save_img(img_path: Path, out_path: Path):
+def modify_and_save_img(
+    img_path: Path, out_path: Path, segmentation_channels: Dict[str, str]
+):
     with tif.TiffFile(path_to_str(img_path)) as TF:
         ome_meta = TF.ome_metadata
         img_stack = TF.series[0].asarray()
     new_img_stack = add_z_axis(img_stack)
-    new_ome_meta = modify_initial_ome_meta(ome_meta)
+    new_ome_meta = modify_initial_ome_meta(ome_meta, segmentation_channels)
     with tif.TiffWriter(path_to_str(out_path), bigtiff=True) as TW:
         TW.write(
             new_img_stack,
@@ -81,6 +44,7 @@ def copy_files(
     out_name_template: str,
     region: int,
     slices: Dict[str, str],
+    additional_info=None,
 ):
     for img_slice_name, slice_path in slices.items():
         img_name = img_name_template.format(region=region, slice_name=img_slice_name)
@@ -91,7 +55,8 @@ def copy_files(
         if file_type == "mask":
             shutil.copy(src, dst)
         elif file_type == "expr":
-            modify_and_save_img(src, dst)
+            segmentation_channels = additional_info
+            modify_and_save_img(src, dst, segmentation_channels)
         print("region:", region, "| src:", src, "| dst:", dst)
 
 
@@ -118,7 +83,9 @@ def collect_segm_masks(
     dask.compute(*tasks)
 
 
-def collect_expr(data_dir: Path, listing: dict, out_dir: Path):
+def collect_expr(
+    data_dir: Path, listing: dict, out_dir: Path, segmentation_channels: Dict[str, str]
+):
     out_name_template = "reg{region:03d}_{slice_name}_expr.ome.tiff"
     img_name_template = "{slice_name}.ome.tif"  # one f
     dir_name_template = "region_{region:03d}"
@@ -134,6 +101,7 @@ def collect_expr(data_dir: Path, listing: dict, out_dir: Path):
             out_name_template,
             region,
             slices,
+            segmentation_channels,
         )
         tasks.append(task)
     dask.compute(*tasks)
@@ -142,6 +110,7 @@ def collect_expr(data_dir: Path, listing: dict, out_dir: Path):
 def main(data_dir: Path, mask_dir: Path, pipeline_config_path: Path):
     pipeline_config = read_pipeline_config(pipeline_config_path)
     listing = pipeline_config["dataset_map_all_slices"]
+    segmentation_channels = pipeline_config["segmentation_channels"]
 
     out_dir = Path("/output/pipeline_output")
     mask_out_dir = out_dir / "mask"
@@ -153,7 +122,7 @@ def main(data_dir: Path, mask_dir: Path, pipeline_config_path: Path):
     print("\nCollecting segmentation masks")
     collect_segm_masks(mask_dir, listing, mask_out_dir)
     print("\nCollecting expressions")
-    collect_expr(data_dir, listing, expr_out_dir)
+    collect_expr(data_dir, listing, expr_out_dir, segmentation_channels)
 
 
 if __name__ == "__main__":
