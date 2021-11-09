@@ -1,8 +1,7 @@
+import unicodedata
 from io import StringIO
 from typing import Dict
 from xml.etree import ElementTree as ET
-
-import unicodedata
 
 
 def strip_namespace(xmlstr: str):
@@ -13,7 +12,9 @@ def strip_namespace(xmlstr: str):
     return root
 
 
-def add_sa_segmentation_channels_info(omexml: ET.Element, nucleus_channel: str, cell_channel: str):
+def add_sa_segmentation_channels_info(
+    omexml: ET.Element, nucleus_channel: str, cell_channel: str
+):
     """
     Will add this, to the root, after Image node
     <StructuredAnnotations>
@@ -31,7 +32,9 @@ def add_sa_segmentation_channels_info(omexml: ET.Element, nucleus_channel: str, 
     </StructuredAnnotations>
     """
     structured_annotation = ET.Element("StructuredAnnotations")
-    annotation = ET.SubElement(structured_annotation, "XMLAnnotation", {"ID": "Annotation:0"})
+    annotation = ET.SubElement(
+        structured_annotation, "XMLAnnotation", {"ID": "Annotation:0"}
+    )
     annotation_value = ET.SubElement(annotation, "Value")
     original_metadata = ET.SubElement(annotation_value, "OriginalMetadata")
     segmentation_channels_key = ET.SubElement(
@@ -64,6 +67,29 @@ def convert_um_to_nm(px_node: ET.Element):
             px_node.set("PhysicalSizeY", str(float(size_y) * 1000))
 
 
+def remove_tiffdata(px_node: ET.Element):
+    for td in px_node.findall("TiffData"):
+        px_node.remove(td)
+
+
+def generate_and_add_new_tiffdata(px_node: ET.Element):
+    num_channels = int(px_node.get("SizeC"))
+    num_z = int(px_node.get("SizeZ"))
+    for c in range(0, num_channels):
+        for z in range(0, num_z):
+            td = ET.Element(
+                "TiffData",
+                {
+                    "FirstT": "0",
+                    "FirstC": str(c),
+                    "FirstZ": str(z),
+                    "IFD": str(c),
+                    "PlaneCount": "1",
+                },
+            )
+            px_node.append(td)
+
+
 def modify_initial_ome_meta(xml_str: str, segmentation_channels: Dict[str, str]):
     new_dim_order = "XYZCT"
     ome_xml: ET.Element = strip_namespace(xml_str)
@@ -71,8 +97,13 @@ def modify_initial_ome_meta(xml_str: str, segmentation_channels: Dict[str, str])
     px_node = ome_xml.find("Image").find("Pixels")
     px_node.set("DimensionOrder", new_dim_order)
     convert_um_to_nm(px_node)
+    remove_tiffdata(px_node)
+    generate_and_add_new_tiffdata(px_node)
+
     ome_xml.remove(ome_xml.find("StructuredAnnotations"))
-    add_sa_segmentation_channels_info(ome_xml, segmentation_channels["nucleus"], segmentation_channels["cell"])
+    add_sa_segmentation_channels_info(
+        ome_xml, segmentation_channels["nucleus"], segmentation_channels["cell"]
+    )
     new_xml_str = ET.tostring(ome_xml).decode("ascii")
     res = '<?xml version="1.0" encoding="utf-8"?>\n' + new_xml_str
     return res
