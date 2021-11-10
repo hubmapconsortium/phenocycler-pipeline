@@ -75,6 +75,7 @@ def remove_tiffdata(px_node: ET.Element):
 def generate_and_add_new_tiffdata(px_node: ET.Element):
     num_channels = int(px_node.get("SizeC"))
     num_z = int(px_node.get("SizeZ"))
+    ifd = 0
     for c in range(0, num_channels):
         for z in range(0, num_z):
             td = ET.Element(
@@ -83,11 +84,12 @@ def generate_and_add_new_tiffdata(px_node: ET.Element):
                     "FirstT": "0",
                     "FirstC": str(c),
                     "FirstZ": str(z),
-                    "IFD": str(c),
+                    "IFD": str(ifd),
                     "PlaneCount": "1",
                 },
             )
             px_node.append(td)
+            ifd += 1
 
 
 def modify_initial_ome_meta(xml_str: str, segmentation_channels: Dict[str, str]):
