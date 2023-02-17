@@ -5,3 +5,4 @@ segmentation_channels:
   cell:
     - PCAD
     - NaKATPase
+    - CD3
