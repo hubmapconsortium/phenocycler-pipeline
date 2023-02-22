@@ -67,23 +67,23 @@ def get_first_img_path(data_dir: Path, listing: Dict[int, Dict[str, Path]]) -> P
 
 
 def main(data_dir: Path, meta_path: Path):
+    print("data_dir contents:")
+    from pprint import pprint
+    pprint(list(data_dir.iterdir()))
+
     meta = read_meta(meta_path)
     segmentation_channels = meta["segmentation_channels"]
-
-    listing = create_listing_for_each_region(data_dir)
-    if listing == {}:
-        raise ValueError(
-            "Dataset directory is either empty or has unexpected structure"
-        )
 
     out_dir = Path("/output")
     make_dir_if_not_exists(out_dir)
 
-    first_img_path = data_dir / get_first_img_path(data_dir, listing)
+    first_img_path = data_dir/('3D_image_stack.ome.tiff') 
     segm_ch_names_ids, adj_segmentation_channels = get_segm_channel_ids_from_ome(
         first_img_path, segmentation_channels
     )
 
+    listing = {1: {first_img_path.name.split('.')[0]: first_img_path.relative_to(data_dir)}}
+    
     listing_str = convert_all_paths_to_str(listing)
 
     pipeline_config = dict()
