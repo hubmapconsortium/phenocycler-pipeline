@@ -102,7 +102,8 @@ def modify_initial_ome_meta(xml_str: str, segmentation_channels: Dict[str, str])
     remove_tiffdata(px_node)
     generate_and_add_new_tiffdata(px_node)
 
-    ome_xml.remove(ome_xml.find("StructuredAnnotations"))
+    if sa := ome_xml.find("StructuredAnnotations"):
+        ome_xml.remove(sa)
     add_sa_segmentation_channels_info(
         ome_xml, segmentation_channels["nucleus"], segmentation_channels["cell"]
     )
