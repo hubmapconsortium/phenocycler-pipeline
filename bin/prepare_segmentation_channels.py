@@ -86,6 +86,10 @@ def copy_segm_channels_to_out_dirs(
 
 
 def main(data_dir: Path, pipeline_config_path: Path):
+    print("data_dir contents:")
+    from pprint import pprint
+    pprint(list(data_dir.iterdir()))
+
     pipeline_config = read_pipeline_config(pipeline_config_path)
 
     segm_ch_out_dir = Path("/output") / "segmentation_channels"
