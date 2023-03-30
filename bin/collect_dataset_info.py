@@ -23,10 +23,10 @@ def read_meta(meta_path: Path) -> dict:
 
 def convert_all_paths_to_str(listing: dict) -> Dict[int, Dict[str, str]]:
     all_ch_dirs = dict()
-    for region, dir_path in listing.items():
-        all_ch_dirs[region] = dict()
-        for channel_name, ch_path in listing[region].items():
-            all_ch_dirs[region][channel_name] = path_to_str_local(ch_path)
+    for dir_path in listing.items():
+#        all_ch_dirs[region] = dict()
+        for channel_name, ch_path in listing.items():
+            all_ch_dirs[channel_name] = path_to_str_local(ch_path)
     return all_ch_dirs
 
 
@@ -82,7 +82,7 @@ def main(data_dir: Path, meta_path: Path):
         first_img_path, segmentation_channels
     )
 
-    listing = {1: {first_img_path.name.split('.')[0]: first_img_path.relative_to(data_dir)}}
+    listing = {first_img_path.name.split('.')[0]: first_img_path.relative_to(data_dir)}
     
     listing_str = convert_all_paths_to_str(listing)
 
