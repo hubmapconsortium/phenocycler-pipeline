@@ -62,7 +62,8 @@ def copy_files(
 def collect_segm_masks(
     data_dir: Path, listing: Dict[int, Dict[str,str]], out_dir: Path
 ):
-    for image_file in data_dir.glob('*.ome.tiff'):
+    print(str(data_dir))
+    for image_file in data_dir.glob('*.tif'): #one f
         filename_base = image_file.name.split('.')[0]
         new_filename = f'{filename_base}_mask.ome.tiff'
         output_file = out_dir / new_filename
