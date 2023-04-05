@@ -1,5 +1,6 @@
 import argparse
 from pathlib import Path
+from pprint import pprint
 from typing import Dict, List
 
 import dask
@@ -43,19 +44,20 @@ def extract_segm_channels(path: Path, segm_ch_ids: Dict[str, int]):
 
 def copy_channels(
     out_dir: Path,
-    #dirs_per_region: Dict[int, Path],
     img_path: Path,
     img_slice_name: str,
-    #region: int,
-    segm_ch_index: int,
+    segm_ch_index: dict,
     segmentation_channel_ids: Dict[str, int],
 ):
-    new_name_template = "{segm_ch_type}.tif"
+    new_name_template = "{slice_name}_{segm_ch_type}.tif"
     segm_channels = extract_segm_channels(img_path, segmentation_channel_ids)
+    print("segm_channels:")
+    pprint(segm_channels)
     for ch_name, img in segm_channels.items():
         segm_ch_type = segm_ch_index[ch_name]
         new_name = new_name_template.format(
-            segm_ch_type=segm_ch_type
+            slice_name=img_slice_name,
+            segm_ch_type=segm_ch_type,
         )
         dst = out_dir / new_name
         tif.imwrite(dst, img)
@@ -67,32 +69,27 @@ def copy_segm_channels_to_out_dirs(
     listing: Dict[int, Dict[str, str]],
     segmentation_channels: Dict[str, str],
     segmentation_channel_ids: Dict[str, int],
-    #dirs_per_region: Dict[int, Path],
     out_dir: Path,
 ):
     tasks = []
     segm_ch_index = change_vals_to_keys(segmentation_channels)
-    for slices in listing.items():
-        for img_slice_name, path in segmentation_channels.items():
-            img_path = data_dir / '3D_image_stack.ome.tiff'
-            task = dask.delayed(copy_channels)(
-                out_dir,
-                #dirs_per_region,
-                img_path,
-                #           dirs_per_region,
-#        data_dir,
-                img_slice_name,
-                #region,
-                segm_ch_index,
-                segmentation_channel_ids,
-            )
-            tasks.append(task)
+    for img_slice_name, path in listing.items():
+        img_path = data_dir / "3D_image_stack.ome.tiff"
+        task = dask.delayed(copy_channels)(
+            out_dir,
+            img_path,
+            img_slice_name,
+            segm_ch_index,
+            segmentation_channel_ids,
+        )
+        tasks.append(task)
     dask.compute(*tasks)
 
 
 def main(data_dir: Path, pipeline_config_path: Path):
     print("data_dir contents:")
     from pprint import pprint
+
     pprint(list(data_dir.iterdir()))
 
     pipeline_config = read_pipeline_config(pipeline_config_path)
@@ -106,8 +103,6 @@ def main(data_dir: Path, pipeline_config_path: Path):
     segm_ch_ids = pipeline_config["segmentation_channel_ids"]
 
     dask.config.set({"num_workers": 5, "scheduler": "processes"})
-
-    #segm_ch_dirs_per_region = create_dirs_per_region(listing, segm_ch_out_dir)
 
     copy_segm_channels_to_out_dirs(
         data_dir, listing, segm_ch, segm_ch_ids, segm_ch_out_dir
