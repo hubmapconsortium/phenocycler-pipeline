@@ -2,7 +2,7 @@ cwlVersion: v1.1
 class: CommandLineTool
 label: Collect segmentation masks and images for the final output
 
-hints:
+requirements:
   DockerRequirement:
     dockerPull: hubmap/mibi-scripts:latest
     dockerOutputDirectory: "/output"

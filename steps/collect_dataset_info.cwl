@@ -2,7 +2,7 @@ cwlVersion: v1.1
 class: CommandLineTool
 label: Collect dataset info
 
-hints:
+requirements:
   DockerRequirement:
     dockerPull: hubmap/mibi-scripts:latest
     dockerOutputDirectory: "/output"
