@@ -12,9 +12,7 @@ def strip_namespace(xmlstr: str):
     return root
 
 
-def add_sa_segmentation_channels_info(
-    omexml: ET.Element, nucleus_channel: str, cell_channel: str
-):
+def add_sa_segmentation_channels_info(omexml: ET.Element, nucleus_channel: str, cell_channel: str):
     """
     Will add this, to the root, after Image node
     <StructuredAnnotations>
@@ -32,9 +30,7 @@ def add_sa_segmentation_channels_info(
     </StructuredAnnotations>
     """
     structured_annotation = ET.Element("StructuredAnnotations")
-    annotation = ET.SubElement(
-        structured_annotation, "XMLAnnotation", {"ID": "Annotation:0"}
-    )
+    annotation = ET.SubElement(structured_annotation, "XMLAnnotation", {"ID": "Annotation:0"})
     annotation_value = ET.SubElement(annotation, "Value")
     original_metadata = ET.SubElement(annotation_value, "OriginalMetadata")
     segmentation_channels_key = ET.SubElement(
@@ -92,7 +88,14 @@ def generate_and_add_new_tiffdata(px_node: ET.Element):
             ifd += 1
 
 
-def modify_initial_ome_meta(xml_str: str, segmentation_channels: Dict[str, str], pixel_size_x: float, pixel_size_y: float, pixel_unit_x: str, pixel_unit_y: str):
+def modify_initial_ome_meta(
+    xml_str: str,
+    segmentation_channels: Dict[str, str],
+    pixel_size_x: float,
+    pixel_size_y: float,
+    pixel_unit_x: str,
+    pixel_unit_y: str,
+):
     new_dim_order = "XYZCT"
     ome_xml: ET.Element = strip_namespace(xml_str)
     ome_xml.set("xmlns", "http://www.openmicroscopy.org/Schemas/OME/2016-06")

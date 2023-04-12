@@ -5,6 +5,7 @@ from typing import Dict, List
 
 import dask
 import tifffile as tif
+
 from utils import (
     make_dir_if_not_exists,
     path_to_str,
@@ -13,9 +14,7 @@ from utils import (
 )
 
 
-def create_dirs_per_region(
-    listing: Dict[int, Dict[str, str]], out_dir: Path
-) -> Dict[int, Path]:
+def create_dirs_per_region(listing: Dict[int, Dict[str, str]], out_dir: Path) -> Dict[int, Path]:
     dirs_per_region = dict()
     dir_name_template = "region_{region:03d}"
     for region in listing:
@@ -104,17 +103,13 @@ def main(data_dir: Path, pipeline_config_path: Path):
 
     dask.config.set({"num_workers": 5, "scheduler": "processes"})
 
-    copy_segm_channels_to_out_dirs(
-        data_dir, listing, segm_ch, segm_ch_ids, segm_ch_out_dir
-    )
+    copy_segm_channels_to_out_dirs(data_dir, listing, segm_ch, segm_ch_ids, segm_ch_out_dir)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_dir", type=Path, help="path to the dataset directory")
-    parser.add_argument(
-        "--pipeline_config", type=Path, help="path to dataset metadata yaml"
-    )
+    parser.add_argument("--pipeline_config", type=Path, help="path to dataset metadata yaml")
     args = parser.parse_args()
 
     main(args.data_dir, args.pipeline_config)
