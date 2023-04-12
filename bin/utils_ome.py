@@ -92,12 +92,16 @@ def generate_and_add_new_tiffdata(px_node: ET.Element):
             ifd += 1
 
 
-def modify_initial_ome_meta(xml_str: str, segmentation_channels: Dict[str, str]):
+def modify_initial_ome_meta(xml_str: str, segmentation_channels: Dict[str, str], pixel_size_x: float, pixel_size_y: float, pixel_unit_x: str, pixel_unit_y: str):
     new_dim_order = "XYZCT"
     ome_xml: ET.Element = strip_namespace(xml_str)
     ome_xml.set("xmlns", "http://www.openmicroscopy.org/Schemas/OME/2016-06")
     px_node = ome_xml.find("Image").find("Pixels")
     px_node.set("DimensionOrder", new_dim_order)
+    px_node.set("PhysicalSizeX", str(pixel_size_x))
+    px_node.set("PhysicalSizeY", str(pixel_size_y))
+    px_node.set("PhysicalSizeXUnit", pixel_unit_x)
+    px_node.set("PhysicalSizeYUnit", pixel_unit_y)
     convert_um_to_nm(px_node)
     remove_tiffdata(px_node)
     generate_and_add_new_tiffdata(px_node)

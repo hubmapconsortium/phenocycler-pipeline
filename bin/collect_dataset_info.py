@@ -13,7 +13,7 @@ from utils import (
     save_pipeline_config,
 )
 from utils_ome import strip_namespace
-
+import csv
 
 def read_meta(meta_path: Path) -> dict:
     with open(meta_path, "r") as s:
@@ -27,6 +27,24 @@ def convert_all_paths_to_str(listing: dict) -> Dict[int, Dict[str, str]]:
         all_ch_dirs[channel_name] = path_to_str_local(ch_path)
     return all_ch_dirs
 
+def get_pixel_size_from_tsv(tsvpath: Path) -> Tuple[float, float, str, str]:
+    #print(tsvpath)
+    with open(path_to_str(tsvpath)) as tsvfile:
+        reader = csv.DictReader(tsvfile, delimiter='\t')
+        for row in reader:
+            pixel_size_x = float(row['pixel_size_x_value'])
+            pixel_size_y = float(row['pixel_size_y_value'])
+            pixel_unit_x = row['pixel_size_x_unit']
+            pixel_unit_y = row['pixel_size_y_unit']
+
+    return pixel_size_x, pixel_size_y, pixel_unit_x, pixel_unit_y
+    #with tif.TiffWriter(path_to_str(tifpath), bigtiff=True) as tf:
+    #    tf.write(
+    #        metadata={
+    #            'PhysicalSizeX' : pixel_size_x,
+    #            'PhysicalSizeY' : pixel_size_y
+    #        }
+    #    )
 
 def get_segm_channel_ids_from_ome(
     path: Path,
@@ -72,6 +90,12 @@ def main(data_dir: Path, meta_path: Path):
     make_dir_if_not_exists(out_dir)
 
     first_img_path = data_dir / "3D_image_stack.ome.tiff"
+
+    for image_file in data_dir.glob("*.tsv"):
+        tsv_path = image_file
+        #tsv_path = data_dir.glob("*.ome.tsv")
+        x_size, y_size, x_unit, y_unit = get_pixel_size_from_tsv(tsv_path)
+        
     segm_ch_names_ids, adj_segmentation_channels = get_segm_channel_ids_from_ome(
         first_img_path, segmentation_channels
     )
@@ -84,6 +108,10 @@ def main(data_dir: Path, meta_path: Path):
     pipeline_config["segmentation_channels"] = adj_segmentation_channels
     pipeline_config["dataset_map_all_slices"] = listing_str
     pipeline_config["segmentation_channel_ids"] = segm_ch_names_ids
+    pipeline_config["pixel_size_x"] = x_size
+    pipeline_config["pixel_size_y"] = y_size
+    pipeline_config["pixel_unit_x"] = x_unit
+    pipeline_config["pixel_unit_y"] = y_unit
 
     pipeline_config_path = out_dir / "pipeline_config.yaml"
     save_pipeline_config(pipeline_config, pipeline_config_path)

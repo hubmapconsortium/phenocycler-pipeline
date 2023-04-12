@@ -19,13 +19,13 @@ def add_z_axis(img_stack: Image):
 
 
 def modify_and_save_img(
-    img_path: Path, out_path: Path, segmentation_channels: Dict[str, str]
+        img_path: Path, out_path: Path, segmentation_channels: Dict[str, str], pixel_size_x: float, pixel_size_y: float, pixel_unit_x: str, pixel_unit_y: str
 ):
     with tif.TiffFile(path_to_str(img_path)) as TF:
         ome_meta = TF.ome_metadata
         img_stack = TF.series[0].asarray()
     new_img_stack = add_z_axis(img_stack)
-    new_ome_meta = modify_initial_ome_meta(ome_meta, segmentation_channels)
+    new_ome_meta = modify_initial_ome_meta(ome_meta, segmentation_channels, pixel_size_x, pixel_size_y, pixel_unit_x, pixel_unit_y)
     with tif.TiffWriter(path_to_str(out_path), bigtiff=True) as TW:
         TW.write(
             new_img_stack,
@@ -66,20 +66,24 @@ def collect_segm_masks(data_dir: Path, out_dir: Path):
 
 
 def collect_expr(
-    data_dir: Path, listing: dict, out_dir: Path, segmentation_channels: Dict[str, str]
+        data_dir: Path, listing: dict, out_dir: Path, segmentation_channels: Dict[str, str], pixel_size_x: float, pixel_size_y: float, pixel_unit_x: str, pixel_unit_y: str
 ):
     for image_file in data_dir.glob("*.ome.tiff"):
         filename_base = image_file.name.split(".")[0]
         new_filename = f"{filename_base}_expr.ome.tiff"
         output_file = out_dir / new_filename
-        modify_and_save_img(image_file, output_file, segmentation_channels)
+        modify_and_save_img(image_file, output_file, segmentation_channels, pixel_size_x, pixel_size_y, pixel_unit_x, pixel_unit_y)
 
 
 def main(data_dir: Path, mask_dir: Path, pipeline_config_path: Path):
     pipeline_config = read_pipeline_config(pipeline_config_path)
     listing = pipeline_config["dataset_map_all_slices"]
     segmentation_channels = pipeline_config["segmentation_channels"]
-
+    pixel_size_x = pipeline_config["pixel_size_x"]
+    pixel_size_y = pipeline_config["pixel_size_y"]
+    pixel_unit_x = pipeline_config["pixel_unit_x"]
+    pixel_unit_y = pipeline_config["pixel_unit_y"]
+    
     out_dir = Path("/output/pipeline_output")
     mask_out_dir = out_dir / "mask"
     expr_out_dir = out_dir / "expr"
@@ -89,7 +93,7 @@ def main(data_dir: Path, mask_dir: Path, pipeline_config_path: Path):
     print("\nCollecting segmentation masks")
     collect_segm_masks(mask_dir, mask_out_dir)
     print("\nCollecting expressions")
-    collect_expr(data_dir, listing, expr_out_dir, segmentation_channels)
+    collect_expr(data_dir, listing, expr_out_dir, segmentation_channels, pixel_size_x, pixel_size_y, pixel_unit_x, pixel_unit_y)
 
 
 if __name__ == "__main__":
