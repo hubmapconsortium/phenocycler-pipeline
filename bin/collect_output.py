@@ -1,16 +1,56 @@
 import argparse
 import shutil
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Optional, List
 
 import dask
 import numpy as np
 import tifffile as tif
+from ome_types.model import MapAnnotation, StructuredAnnotationList, Map
+from antibodies_tsv_util import antibodies_tsv_util as ab_tools
+import pandas as pd
 
 from utils import make_dir_if_not_exists, path_to_str, read_pipeline_config
 from utils_ome import modify_initial_ome_meta
 
 Image = np.ndarray
+
+
+def map_antb_names(antb_df):
+    mapping = {
+        channel_id: antibody_name
+        for channel_id, antibody_name in zip(antb_df["channel_id"], antb_df["channel_name"])
+    }
+    return mapping
+
+
+def replace_channel_name(antb_df, og_ch_names):
+    mapping = map_antb_names(antb_df)
+    updated_channel_names = [mapping.get(channel_id, channel_id) for channel_id in og_ch_names]
+    return updated_channel_names
+
+
+def generate_sa_ch_info(
+    channel_name: str,
+    antb_info: pd.DataFrame,
+) -> Optional[MapAnnotation]:
+    try:
+        antb_row = antb_info.loc[antb_info['antibody_name'] == channel_name]
+    except KeyError:
+        return None
+
+    uniprot_id = antb_row["uniprot_accession_number"]
+    rrid = antb_row["rr_id"]
+    antb_id = antb_row["channel_id"]
+    original_name = antb_row["channel_id"]
+    name_key = Map.M(k="Name", value=channel_name)
+    og_name_key = Map.M(k="Original Name", value=original_name)
+    uniprot_key = Map.M(k="UniprotID", value=uniprot_id)
+    rrid_key = Map.M(k="RRID", value=rrid)
+    antb_id_key = Map.M(k="AntibodiesTsvID", value=antb_id)
+    ch_info = Map(ms=[name_key, og_name_key, uniprot_key, rrid_key, antb_id_key])
+    annotation = MapAnnotation(value=ch_info)
+    return annotation
 
 
 def add_z_axis(img_stack: Image):
@@ -102,11 +142,14 @@ def collect_expr(
 def main(data_dir: Path, mask_dir: Path, pipeline_config_path: Path):
     pipeline_config = read_pipeline_config(pipeline_config_path)
     listing = pipeline_config["dataset_map_all_slices"]
-    segmentation_channels = pipeline_config["segmentation_channels"]
+    og_segmentation_channels = pipeline_config["segmentation_channels"]
     pixel_size_x = pipeline_config["pixel_size_x"]
     pixel_size_y = pipeline_config["pixel_size_y"]
     pixel_unit_x = pipeline_config["pixel_unit_x"]
     pixel_unit_y = pipeline_config["pixel_unit_y"]
+    antb_info = ab_tools.find_antibodies_meta(data_dir)
+    print(antb_info)
+    segmentation_channels = replace_channel_name(antb_info, og_segmentation_channels)
 
     out_dir = Path("/output/pipeline_output")
     mask_out_dir = out_dir / "mask"
