@@ -165,14 +165,15 @@ def main(data_dir: Path, mask_dir: Path, pipeline_config_path: Path):
     pipeline_config = read_pipeline_config(pipeline_config_path)
     listing = pipeline_config["dataset_map_all_slices"]
     og_segmentation_channels = pipeline_config["segmentation_channels"]
+    print("original channel names: \n", og_segmentation_channels)
     pixel_size_x = pipeline_config["pixel_size_x"]
     pixel_size_y = pipeline_config["pixel_size_y"]
     pixel_unit_x = pipeline_config["pixel_unit_x"]
     pixel_unit_y = pipeline_config["pixel_unit_y"]
     antb_info = ab_tools.find_antibodies_meta(data_dir)
-    print(antb_info)
+    print("antibodies dataframe: \n", antb_info)
     segmentation_channels = replace_channel_name(antb_info, og_segmentation_channels)
-
+    print("new channel names: \n", segmentation_channels)
     out_dir = Path("/output/pipeline_output")
     mask_out_dir = out_dir / "mask"
     expr_out_dir = out_dir / "expr"
