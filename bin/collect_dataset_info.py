@@ -74,6 +74,7 @@ def generate_sa_ch_info(
 
 def update_ome_tiff(ome_tiff: Path, updated_channels: List, original_channels: List, antb_df: pd.DataFrame) -> OME():
     image = AICSImage(ome_tiff)
+    imageDataForOmeTiff = image.get_image_data("TCZYX")
     omexml = OmeTiffWriter.build_ome(
         data_shapes=[(image.dims.T, image.dims.C, image.dims.Z, image.dims.Y, image.dims.X)],
         data_types=[image.dtype],

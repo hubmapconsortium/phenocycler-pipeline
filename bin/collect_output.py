@@ -1,7 +1,7 @@
 import argparse
 import shutil
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List, Optional
 
 import dask
 import numpy as np
@@ -9,8 +9,98 @@ import tifffile as tif
 
 from utils import make_dir_if_not_exists, path_to_str, read_pipeline_config
 from utils_ome import modify_initial_ome_meta
+from aicsimageio import AICSImage
+from aicsimageio.writers.ome_tiff_writer import OmeTiffWriter
+from ome_types.model import MapAnnotation, StructuredAnnotationList, Map, AnnotationRef, OME
+from antibodies_tsv_util import antibodies_tsv_util as ab_tools
+import pandas as pd
 
 Image = np.ndarray
+
+
+def collect_expressions_extract_channels(extractFile: Path) -> List[str]:
+    """
+    Given a TIFF file path, read file with TiffFile to get Labels attribute from
+    ImageJ metadata. Return a list of the channel names in the same order as they
+    appear in the ImageJ metadata.
+    We need to do this to get the channel names in the correct order, and the
+    ImageJ "Labels" attribute isn't picked up by AICSImageIO.
+    """
+
+    with tif.TiffFile(str(extractFile.absolute())) as TF:
+        ij_meta = TF.imagej_metadata
+    numChannels = int(ij_meta["channels"])
+    channelList = ij_meta["Labels"][0:numChannels]
+    return channelList
+
+
+def map_antb_names(antb_df: pd.DataFrame):
+    mapping = {
+        channel_id: antibody_name
+        for channel_id, antibody_name in zip(antb_df["channel_id"], antb_df["channel_name"])
+    }
+    return mapping
+
+
+def replace_channel_name(antb_df: pd.DataFrame, og_ch_names: List) -> List:
+    mapping = map_antb_names(antb_df)
+    updated_channel_names = [mapping.get(channel_id, channel_id) for channel_id in og_ch_names]
+    return updated_channel_names
+
+
+def generate_sa_ch_info(
+    channel_name: str,
+    antb_df: pd.DataFrame,
+) -> Optional[MapAnnotation]:
+    try:
+        antb_row = antb_df.loc[antb_df['antibody_name'] == channel_name]
+    except KeyError:
+        return None
+    uniprot_id = antb_row["uniprot_accession_number"]
+    rrid = antb_row["rr_id"]
+    original_name = antb_row["channel_id"]
+    name_key = Map.M(k="Name", value=channel_name)
+    og_name_key = Map.M(k="Original Name", value=original_name)
+    uniprot_key = Map.M(k="UniprotID", value=uniprot_id)
+    rrid_key = Map.M(k="RRID", value=rrid)
+    ch_info = Map(ms=[name_key, og_name_key, uniprot_key, rrid_key])
+    annotation = MapAnnotation(value=ch_info)
+    return annotation
+
+
+def update_ome_tiff(ome_tiff: Path, updated_channels: List, original_channels: List, antb_df: pd.DataFrame) -> OME():
+    image = AICSImage(ome_tiff)
+    imageDataForOmeTiff = image.get_image_data("TCZYX")
+    omexml = OmeTiffWriter.build_ome(
+        data_shapes=[(image.dims.T, image.dims.C, image.dims.Z, image.dims.Y, image.dims.X)],
+        data_types=[image.dtype],
+        dimension_order=["TCZYX"],
+        channel_names=[updated_channels],
+        image_name=[ome_tiff.name],
+        physical_pixel_sizes=[image.physical_pixel_sizes],
+    )
+    annotations = StructuredAnnotationList()
+    for i, (channel_obj, channel_name, original_name) in enumerate(
+        zip(
+            omexml.images[0].pixels.channels,
+            updated_channels,
+            original_channels
+        )
+    ):
+        channel_id = f"Channel:0:{i}"
+        channel_obj.name = channel_name
+        channel_obj.id = channel_id
+        if antb_df is None:
+            continue
+        if original_name==channel_name:
+            continue
+        ch_info = generate_sa_ch_info(channel_name, antb_df)
+        if ch_info is None:
+            continue
+        channel_obj.annotation_refs.append(AnnotationRef(id=ch_info.id))
+        annotations.append(ch_info)
+        omexml.structured_annotations = annotations
+    return omexml
 
 
 def add_z_axis(img_stack: Image):
