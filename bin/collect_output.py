@@ -11,6 +11,7 @@ from utils import make_dir_if_not_exists, path_to_str, read_pipeline_config
 from utils_ome import modify_initial_ome_meta
 from aicsimageio import AICSImage
 from aicsimageio.writers.ome_tiff_writer import OmeTiffWriter
+from ome_types import from_tiff
 from ome_types.model import MapAnnotation, StructuredAnnotationList, Map, AnnotationRef, OME
 import pandas as pd
 import logging
@@ -53,8 +54,11 @@ def collect_expressions_extract_channels(extractFile: Path) -> List[str]:
 
     with tif.TiffFile(str(extractFile.absolute())) as TF:
         ij_meta = TF.imagej_metadata
-    numChannels = int(ij_meta["channels"])
-    channelList = ij_meta["Labels"][0:numChannels]
+    if ij_meta == None:
+        return None
+    else:
+        numChannels = int(ij_meta["channels"])
+        channelList = ij_meta["Labels"][0:numChannels]
     return channelList
 
 
@@ -94,40 +98,35 @@ def generate_sa_ch_info(
 
 def update_omexml(ome_tiff: Path, antb_df: pd.DataFrame) -> OME():
     original_channels = collect_expressions_extract_channels(ome_tiff)
-    print("original channel names: \n", original_channels)
-    updated_channels = replace_channel_names(antb_df, original_channels)
-    print("updated channel names: \n", updated_channels)
-    image = AICSImage(ome_tiff)
-    omexml = OmeTiffWriter.build_ome(
-        data_shapes=[(image.dims.T, image.dims.C, image.dims.Z, image.dims.Y, image.dims.X)],
-        data_types=[image.dtype],
-        dimension_order=["TCZYX"],
-        channel_names=[updated_channels],
-        image_name=[ome_tiff.name],
-        physical_pixel_sizes=[image.physical_pixel_sizes],
-    )
-    annotations = StructuredAnnotationList()
-    for i, (channel_obj, channel_name, original_name) in enumerate(
-        zip(
-            omexml.images[0].pixels.channels,
-            updated_channels,
-            original_channels
-        )
-    ):
-        channel_id = f"Channel:0:{i}"
-        channel_obj.name = channel_name
-        channel_obj.id = channel_id
-        if original_name==channel_name:
-            continue
-        ch_info = generate_sa_ch_info(channel_name, antb_df)
-        if ch_info is None:
-            continue
-        channel_obj.annotation_refs.append(AnnotationRef(id=ch_info.id))
-        annotations.append(ch_info)
-        omexml.structured_annotations = annotations
-        for i in omexml.structured_annotations:
-            print(i)
-    return omexml
+    if original_channels == None:
+        return None
+    else:
+        print("original channel names: \n", original_channels)
+        updated_channels = replace_channel_names(antb_df, original_channels)
+        print("updated channel names: \n", updated_channels)
+        omexml = from_tiff(ome_tiff)
+        annotations = StructuredAnnotationList()
+        for i, (channel_obj, channel_name, original_name) in enumerate(
+            zip(
+                omexml.images[0].pixels.channels,
+                updated_channels,
+                original_channels
+            )
+        ):
+            channel_id = f"Channel:0:{i}"
+            channel_obj.name = channel_name
+            channel_obj.id = channel_id
+            if original_name==channel_name:
+                continue
+            ch_info = generate_sa_ch_info(channel_name, antb_df)
+            if ch_info is None:
+                continue
+            channel_obj.annotation_refs.append(AnnotationRef(id=ch_info.id))
+            annotations.append(ch_info)
+            omexml.structured_annotations = annotations
+            for i in omexml.structured_annotations:
+                print(i)
+        return omexml
 
 
 def add_z_axis(img_stack: Image):
@@ -147,11 +146,17 @@ def modify_and_save_img(
     antb_df: pd.DataFrame,
 ):
     with tif.TiffFile(path_to_str(img_path)) as TF:
-        ome_meta = update_omexml(img_path, antb_df)
+        omexml = update_omexml(img_path, antb_df)
+        tif_meta = TF.ome_metadata
         img_stack = TF.series[0].asarray()
         new_img_stack = add_z_axis(img_stack)
-        new_ome_meta = modify_initial_ome_meta(
-        ome_meta, segmentation_channels, pixel_size_x, pixel_size_y, pixel_unit_x, pixel_unit_y
+        if omexml != None:
+            new_ome_meta = modify_initial_ome_meta(
+            omexml, segmentation_channels, pixel_size_x, pixel_size_y, pixel_unit_x, pixel_unit_y
+            )
+        else:
+            new_ome_meta = modify_initial_ome_meta(
+            tif_meta, segmentation_channels, pixel_size_x, pixel_size_y, pixel_unit_x, pixel_unit_y
     )
     with tif.TiffWriter(path_to_str(out_path), bigtiff=True) as TW:
         TW.save(
