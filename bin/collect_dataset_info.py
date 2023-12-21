@@ -15,9 +15,27 @@ from utils import (
     save_pipeline_config,
 )
 from utils_ome import strip_namespace
+from aicsimageio import AICSImage
+from aicsimageio.writers.ome_tiff_writer import OmeTiffWriter
 from ome_types.model import MapAnnotation, StructuredAnnotationList, Map, AnnotationRef, OME
 from antibodies_tsv_util import antibodies_tsv_util as ab_tools
 import pandas as pd
+
+
+def collect_expressions_extract_channels(extractFile: Path) -> List[str]:
+    """
+    Given a TIFF file path, read file with TiffFile to get Labels attribute from
+    ImageJ metadata. Return a list of the channel names in the same order as they
+    appear in the ImageJ metadata.
+    We need to do this to get the channel names in the correct order, and the
+    ImageJ "Labels" attribute isn't picked up by AICSImageIO.
+    """
+
+    with tif.TiffFile(str(extractFile.absolute())) as TF:
+        ij_meta = TF.imagej_metadata
+    numChannels = int(ij_meta["channels"])
+    channelList = ij_meta["Labels"][0:numChannels]
+    return channelList
 
 
 def map_antb_names(antb_df: pd.DataFrame):
@@ -54,13 +72,22 @@ def generate_sa_ch_info(
     return annotation
 
 
-def create_structured_annotations(channelNames: List, originalNames: List, antb_df: pd.DataFrame, omexml: OME) -> OME:
+def update_ome_tiff(ome_tiff: Path, updated_channels: List, original_channels: List, antb_df: pd.DataFrame) -> OME():
+    image = AICSImage(ome_tiff)
+    omexml = OmeTiffWriter.build_ome(
+        data_shapes=[(image.dims.T, image.dims.C, image.dims.Z, image.dims.Y, image.dims.X)],
+        data_types=[image.dtype],
+        dimension_order=["TCZYX"],
+        channel_names=[updated_channels],
+        image_name=[ome_tiff.name],
+        physical_pixel_sizes=[image.physical_pixel_sizes],
+    )
     annotations = StructuredAnnotationList()
     for i, (channel_obj, channel_name, original_name) in enumerate(
         zip(
             omexml.images[0].pixels.channels,
-            channelNames,
-            originalNames
+            updated_channels,
+            original_channels
         )
     ):
         channel_id = f"Channel:0:{i}"
@@ -156,7 +183,13 @@ def main(data_dir: Path, meta_path: Path):
     make_dir_if_not_exists(out_dir)
 
     first_img_path = data_dir / "3D_image_stack.ome.tiff"
-
+    og_channel_list = collect_expressions_extract_channels(first_img_path)
+    print("original channel names: \n", og_channel_list)
+    antb_path = ab_tools.find_antibodies_meta(data_dir)
+    antb_info = pd.read_table(antb_path)
+    updated_channel_names = replace_channel_name(antb_info, og_channel_list)
+    print("updated channel names: \n", updated_channel_names)
+    updated_omexml = update_ome_tiff(first_img_path, updated_channel_names, og_channel_list, antb_info)
     for image_file in data_dir.glob("*.tsv"):
         tsv_path = image_file
         # tsv_path = data_dir.glob("*.ome.tsv")
