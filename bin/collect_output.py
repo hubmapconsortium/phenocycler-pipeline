@@ -12,10 +12,34 @@ from utils_ome import modify_initial_ome_meta
 from aicsimageio import AICSImage
 from aicsimageio.writers.ome_tiff_writer import OmeTiffWriter
 from ome_types.model import MapAnnotation, StructuredAnnotationList, Map, AnnotationRef, OME
-from antibodies_tsv_util import antibodies_tsv_util as ab_tools
 import pandas as pd
+import logging
+import re
+from os import walk
 
 Image = np.ndarray
+logging.basicConfig(level=logging.INFO, format="%(levelname)-7s - %(message)s")
+logger = logging.getLogger(__name__)
+
+def find_antibodies_meta(input_dir: Path) -> Optional[Path]:
+    """
+    Finds and returns the first metadata file for a HuBMAP data set.
+    Does not check whether the dataset ID (32 hex characters) matches
+    the directory name, nor whether there might be multiple metadata files.
+    """
+    metadata_filename_pattern = re.compile(r"^[0-9A-Za-z\-_]*antibodies\.tsv$")
+    found_files = []
+    for dirpath, dirnames, filenames in walk(input_dir):
+        for filename in filenames:
+            if metadata_filename_pattern.match(filename):
+                found_files.append(Path(dirpath) / filename)
+
+    if len(found_files) == 0:
+        logger.warning("No antibody.tsv file found")
+        antb_path = None
+    else:
+        antb_path = found_files[0]
+    return antb_path
 
 
 def collect_expressions_extract_channels(extractFile: Path) -> List[str]:
@@ -70,7 +94,9 @@ def generate_sa_ch_info(
 
 def update_omexml(ome_tiff: Path, antb_df: pd.DataFrame) -> OME():
     original_channels = collect_expressions_extract_channels(ome_tiff)
+    print("original channel names: \n", original_channels)
     updated_channels = replace_channel_names(antb_df, original_channels)
+    print("updated channel names: \n", updated_channels)
     image = AICSImage(ome_tiff)
     omexml = OmeTiffWriter.build_ome(
         data_shapes=[(image.dims.T, image.dims.C, image.dims.Z, image.dims.Y, image.dims.X)],
@@ -91,8 +117,6 @@ def update_omexml(ome_tiff: Path, antb_df: pd.DataFrame) -> OME():
         channel_id = f"Channel:0:{i}"
         channel_obj.name = channel_name
         channel_obj.id = channel_id
-        if antb_df is None:
-            continue
         if original_name==channel_name:
             continue
         ch_info = generate_sa_ch_info(channel_name, antb_df)
@@ -101,6 +125,8 @@ def update_omexml(ome_tiff: Path, antb_df: pd.DataFrame) -> OME():
         channel_obj.annotation_refs.append(AnnotationRef(id=ch_info.id))
         annotations.append(ch_info)
         omexml.structured_annotations = annotations
+        for i in omexml.structured_annotations:
+            print(i)
     return omexml
 
 
@@ -121,10 +147,10 @@ def modify_and_save_img(
     antb_df: pd.DataFrame,
 ):
     with tif.TiffFile(path_to_str(img_path)) as TF:
-        ome_meta = TF.ome_metadata
+        ome_meta = update_omexml(img_path, antb_df)
         img_stack = TF.series[0].asarray()
-    new_img_stack = add_z_axis(img_stack)
-    new_ome_meta = modify_initial_ome_meta(
+        new_img_stack = add_z_axis(img_stack)
+        new_ome_meta = modify_initial_ome_meta(
         ome_meta, segmentation_channels, pixel_size_x, pixel_size_y, pixel_unit_x, pixel_unit_y
     )
     with tif.TiffWriter(path_to_str(out_path), bigtiff=True) as TW:
@@ -156,7 +182,7 @@ def copy_files(
             shutil.copy(src, dst)
         elif file_type == "expr":
             segmentation_channels = additional_info
-            modify_and_save_img(src, dst, segmentation_channels)
+            modify_and_save_img(src, dst, segmentation_channels, antb_df)
         print("src:", src, "| dst:", dst)
 
 
@@ -190,6 +216,7 @@ def collect_expr(
             pixel_size_y,
             pixel_unit_x,
             pixel_unit_y,
+            antb_df,
         )
 
 
@@ -204,7 +231,7 @@ def main(data_dir: Path, mask_dir: Path, pipeline_config_path: Path):
     out_dir = Path("/output/pipeline_output")
     mask_out_dir = out_dir / "mask"
     expr_out_dir = out_dir / "expr"
-    antb_path = ab_tools.find_antibodies_meta(data_dir)
+    antb_path = find_antibodies_meta(data_dir)
     antb_info = pd.read_table(antb_path)
     make_dir_if_not_exists(mask_out_dir)
     make_dir_if_not_exists(expr_out_dir)

@@ -6,6 +6,7 @@ from xml.etree import ElementTree as ET
 from pint import Quantity, UnitRegistry
 
 target_physical_size = "nm"
+reg = UnitRegistry()
 
 
 def strip_namespace(xmlstr: str):
@@ -50,7 +51,6 @@ def physical_size_to_quantity(
     px_node: ET.Element,
     dimension: Literal["X", "Y"],
 ) -> Optional[Quantity]:
-    reg = UnitRegistry()
 
     unit_str = px_node.get(f"PhysicalSize{dimension}Unit", None)
     if unit_str is None:
