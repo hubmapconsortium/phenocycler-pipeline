@@ -42,7 +42,7 @@ def map_antb_names(antb_df: pd.DataFrame):
     return mapping
 
 
-def replace_channel_name(antb_df: pd.DataFrame, og_ch_names: List) -> List:
+def replace_channel_names(antb_df: pd.DataFrame, og_ch_names: List) -> List:
     mapping = map_antb_names(antb_df)
     updated_channel_names = [mapping.get(channel_id, channel_id) for channel_id in og_ch_names]
     return updated_channel_names
@@ -68,9 +68,10 @@ def generate_sa_ch_info(
     return annotation
 
 
-def update_ome_tiff(ome_tiff: Path, updated_channels: List, original_channels: List, antb_df: pd.DataFrame) -> OME():
+def update_omexml(ome_tiff: Path, antb_df: pd.DataFrame) -> OME():
+    original_channels = collect_expressions_extract_channels(ome_tiff)
+    updated_channels = replace_channel_names(antb_df, original_channels)
     image = AICSImage(ome_tiff)
-    imageDataForOmeTiff = image.get_image_data("TCZYX")
     omexml = OmeTiffWriter.build_ome(
         data_shapes=[(image.dims.T, image.dims.C, image.dims.Z, image.dims.Y, image.dims.X)],
         data_types=[image.dtype],
@@ -117,6 +118,7 @@ def modify_and_save_img(
     pixel_size_y: float,
     pixel_unit_x: str,
     pixel_unit_y: str,
+    antb_df: pd.DataFrame,
 ):
     with tif.TiffFile(path_to_str(img_path)) as TF:
         ome_meta = TF.ome_metadata
@@ -143,6 +145,7 @@ def copy_files(
     out_name_template: str,
     region: int,
     slices: Dict[str, str],
+    antb_df: pd.DataFrame,
     additional_info=None,
 ):
     for img_slice_name, slice_path in slices.items():
@@ -173,6 +176,7 @@ def collect_expr(
     pixel_size_y: float,
     pixel_unit_x: str,
     pixel_unit_y: str,
+    antb_df: pd.DataFrame,
 ):
     for image_file in data_dir.glob("*.ome.tiff"):
         filename_base = image_file.name.split(".")[0]
@@ -200,6 +204,8 @@ def main(data_dir: Path, mask_dir: Path, pipeline_config_path: Path):
     out_dir = Path("/output/pipeline_output")
     mask_out_dir = out_dir / "mask"
     expr_out_dir = out_dir / "expr"
+    antb_path = ab_tools.find_antibodies_meta(data_dir)
+    antb_info = pd.read_table(antb_path)
     make_dir_if_not_exists(mask_out_dir)
     make_dir_if_not_exists(expr_out_dir)
 
@@ -215,6 +221,7 @@ def main(data_dir: Path, mask_dir: Path, pipeline_config_path: Path):
         pixel_size_y,
         pixel_unit_x,
         pixel_unit_y,
+        antb_info,
     )
 
 
