@@ -1,24 +1,30 @@
 import argparse
+import logging
+import re
 import shutil
+from os import walk
 from pathlib import Path
 from typing import Dict, List, Optional
 
-import dask
 import numpy as np
+import pandas as pd
 import tifffile as tif
+from aicsimageio import AICSImage
+from ome_types import from_tiff
+from ome_types.model import (
+    AnnotationRef,
+    Map,
+    MapAnnotation,
+    StructuredAnnotationList,
+)
 
 from utils import make_dir_if_not_exists, path_to_str, read_pipeline_config
 from utils_ome import modify_initial_ome_meta
-from ome_types import from_tiff
-from ome_types.model import MapAnnotation, StructuredAnnotationList, Map, AnnotationRef, OME
-import pandas as pd
-import logging
-import re
-from os import walk
 
 Image = np.ndarray
 logging.basicConfig(level=logging.INFO, format="%(levelname)-7s - %(message)s")
 logger = logging.getLogger(__name__)
+
 
 def find_antibodies_meta(input_dir: Path) -> Optional[Path]:
     """
@@ -41,30 +47,10 @@ def find_antibodies_meta(input_dir: Path) -> Optional[Path]:
     return antb_path
 
 
-def collect_expressions_extract_channels(extractFile: Path) -> List[str]:
-    """
-    Given a TIFF file path, read file with TiffFile to get Labels attribute from
-    ImageJ metadata. Return a list of the channel names in the same order as they
-    appear in the ImageJ metadata.
-    We need to do this to get the channel names in the correct order, and the
-    ImageJ "Labels" attribute isn't picked up by AICSImageIO.
-    """
-
-    with tif.TiffFile(str(extractFile.absolute())) as TF:
-        ij_meta = TF.imagej_metadata
-    if ij_meta == None:
-        print("You need to find a different way to get the channel names")
-        return None
-    else:
-        numChannels = int(ij_meta["channels"])
-        channelList = ij_meta["Labels"][0:numChannels]
-    return channelList
-
-
 def map_antb_names(antb_df: pd.DataFrame):
     mapping = {
         channel_id: antibody_name
-        for channel_id, antibody_name in zip(antb_df["channel_id"], antb_df["channel_name"])
+        for channel_id, antibody_name in zip(antb_df["channel_id"], antb_df["antibody_name"])
     }
     return mapping
 
@@ -80,12 +66,12 @@ def generate_sa_ch_info(
     antb_df: pd.DataFrame,
 ) -> Optional[MapAnnotation]:
     try:
-        antb_row = antb_df.loc[antb_df['antibody_name'] == channel_name]
+        antb_row = antb_df.loc[antb_df["antibody_name"] == channel_name]
     except KeyError:
         return None
-    uniprot_id = antb_row["uniprot_accession_number"]
-    rrid = antb_row["rr_id"]
-    original_name = antb_row["channel_id"]
+    uniprot_id = antb_row["uniprot_accession_number"].iloc[0]
+    rrid = antb_row["rr_id"].iloc[0]
+    original_name = antb_row["channel_id"].iloc[0]
     name_key = Map.M(k="Name", value=channel_name)
     og_name_key = Map.M(k="Original Name", value=original_name)
     uniprot_key = Map.M(k="UniprotID", value=uniprot_id)
@@ -96,26 +82,21 @@ def generate_sa_ch_info(
 
 
 def update_omexml(ome_tiff: Path, antb_df: pd.DataFrame) -> str:
-    original_channels = collect_expressions_extract_channels(ome_tiff)
+    image = AICSImage(ome_tiff)
+    original_channels = image.channel_names
     if original_channels == None:
         omexml = None
     else:
-        print("original channel names: \n", original_channels)
         updated_channels = replace_channel_names(antb_df, original_channels)
-        print("updated channel names: \n", updated_channels)
         omexml = from_tiff(ome_tiff)
         annotations = StructuredAnnotationList()
         for i, (channel_obj, channel_name, original_name) in enumerate(
-            zip(
-                omexml.images[0].pixels.channels,
-                updated_channels,
-                original_channels
-            )
+            zip(omexml.images[0].pixels.channels, updated_channels, original_channels)
         ):
             channel_id = f"Channel:0:{i}"
             channel_obj.name = channel_name
             channel_obj.id = channel_id
-            if original_name==channel_name:
+            if original_name not in antb_df["channel_id"].values:
                 continue
             ch_info = generate_sa_ch_info(channel_name, antb_df)
             if ch_info is None:
@@ -123,10 +104,7 @@ def update_omexml(ome_tiff: Path, antb_df: pd.DataFrame) -> str:
             channel_obj.annotation_refs.append(AnnotationRef(id=ch_info.id))
             annotations.append(ch_info)
             omexml.structured_annotations = annotations
-            for i in omexml.structured_annotations:
-                print(i)
         omexml = omexml.to_xml()
-        
         return omexml
 
 
@@ -144,7 +122,7 @@ def modify_and_save_img(
     pixel_size_y: float,
     pixel_unit_x: str,
     pixel_unit_y: str,
-    new_xml: Optional[str]
+    new_xml: Optional[str],
 ):
     with tif.TiffFile(path_to_str(img_path)) as TF:
         if new_xml == None:
@@ -210,7 +188,7 @@ def collect_expr(
         filename_base = image_file.name.split(".")[0]
         new_filename = f"{filename_base}_expr.ome.tiff"
         output_file = out_dir / new_filename
-        new_xml = update_omexml(image_file,antb_df)
+        new_xml = update_omexml(image_file, antb_df)
 
         modify_and_save_img(
             image_file,
@@ -220,7 +198,7 @@ def collect_expr(
             pixel_size_y,
             pixel_unit_x,
             pixel_unit_y,
-            new_xml
+            new_xml,
         )
 
 
@@ -237,6 +215,11 @@ def main(data_dir: Path, mask_dir: Path, pipeline_config_path: Path):
     expr_out_dir = out_dir / "expr"
     antb_path = find_antibodies_meta(data_dir)
     antb_info = pd.read_table(antb_path)
+    updated_segmentation_channels = replace_channel_names(
+        antb_info, [segmentation_channels["nucleus"], segmentation_channels["cell"]]
+    )
+    segmentation_channels["nucleus"] = updated_segmentation_channels[0]
+    segmentation_channels["cell"] = updated_segmentation_channels[1]
     make_dir_if_not_exists(mask_out_dir)
     make_dir_if_not_exists(expr_out_dir)
 

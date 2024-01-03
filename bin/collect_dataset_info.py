@@ -1,7 +1,7 @@
 import argparse
 import csv
 from pathlib import Path
-from typing import Dict, List, Tuple, Union, Optional
+from typing import Dict, List, Optional, Tuple, Union
 
 import tifffile as tif
 import yaml
@@ -94,7 +94,7 @@ def main(data_dir: Path, meta_path: Path):
     make_dir_if_not_exists(out_dir)
 
     first_img_path = data_dir / "3D_image_stack.ome.tiff"
-    
+
     for image_file in data_dir.glob("*.tsv"):
         tsv_path = image_file
         # tsv_path = data_dir.glob("*.ome.tsv")

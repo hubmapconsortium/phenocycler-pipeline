@@ -3,6 +3,7 @@ import unicodedata
 from io import StringIO
 from typing import Dict, Literal, Optional
 from xml.etree import ElementTree as ET
+
 from pint import Quantity, UnitRegistry
 
 target_physical_size = "nm"
@@ -51,7 +52,6 @@ def physical_size_to_quantity(
     px_node: ET.Element,
     dimension: Literal["X", "Y"],
 ) -> Optional[Quantity]:
-
     unit_str = px_node.get(f"PhysicalSize{dimension}Unit", None)
     if unit_str is None:
         print("Could not find physical unit in OMEXML for dimension", dimension)
@@ -62,7 +62,7 @@ def physical_size_to_quantity(
         print("Could not find physical unit in OMEXML for dimension", dimension)
         return None
 
-    unit_normalized = unicodedata.normalize("NFKC",html.unescape(unit_str))
+    unit_normalized = unicodedata.normalize("NFKC", html.unescape(unit_str))
     size = float(size_str) * reg[unit_normalized]
     return size
 
@@ -74,6 +74,7 @@ def convert_size_to_nm(px_node: ET.Element):
             size_converted = size.to(target_physical_size)
             px_node.set(f"PhysicalSize{dimension}Unit", target_physical_size)
             px_node.set(f"PhysicalSize{dimension}", str(size_converted.magnitude))
+
 
 def remove_tiffdata(px_node: ET.Element):
     for td in px_node.findall("TiffData"):
@@ -120,9 +121,6 @@ def modify_initial_ome_meta(
     convert_size_to_nm(px_node)
     remove_tiffdata(px_node)
     generate_and_add_new_tiffdata(px_node)
-
-    if sa := ome_xml.find("StructuredAnnotations"):
-        ome_xml.remove(sa)
     add_sa_segmentation_channels_info(
         ome_xml, segmentation_channels["nucleus"], segmentation_channels["cell"]
     )
