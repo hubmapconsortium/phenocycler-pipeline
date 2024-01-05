@@ -63,6 +63,7 @@ def replace_channel_names(antb_df: pd.DataFrame, og_ch_names: List) -> List:
 
 def generate_sa_ch_info(
     channel_name: str,
+    channel_id: str,
     antb_df: pd.DataFrame,
 ) -> Optional[MapAnnotation]:
     try:
@@ -72,11 +73,12 @@ def generate_sa_ch_info(
     uniprot_id = antb_row["uniprot_accession_number"].iloc[0]
     rrid = antb_row["rr_id"].iloc[0]
     original_name = antb_row["channel_id"].iloc[0]
+    channel_id_key = Map.M(k="Channel ID", value = channel_id)
     name_key = Map.M(k="Name", value=channel_name)
     og_name_key = Map.M(k="Original Name", value=original_name)
     uniprot_key = Map.M(k="UniprotID", value=uniprot_id)
     rrid_key = Map.M(k="RRID", value=rrid)
-    ch_info = Map(ms=[name_key, og_name_key, uniprot_key, rrid_key])
+    ch_info = Map(ms=[channel_id_key, name_key, og_name_key, uniprot_key, rrid_key])
     annotation = MapAnnotation(value=ch_info)
     return annotation
 
@@ -98,7 +100,7 @@ def update_omexml(ome_tiff: Path, antb_df: pd.DataFrame) -> str:
             channel_obj.id = channel_id
             if original_name not in antb_df["channel_id"].values:
                 continue
-            ch_info = generate_sa_ch_info(channel_name, antb_df)
+            ch_info = generate_sa_ch_info(channel_name, channel_id, antb_df)
             if ch_info is None:
                 continue
             channel_obj.annotation_refs.append(AnnotationRef(id=ch_info.id))
