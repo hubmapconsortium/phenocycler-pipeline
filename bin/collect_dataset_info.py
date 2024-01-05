@@ -1,7 +1,7 @@
 import argparse
 import csv
 from pathlib import Path
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import tifffile as tif
 import yaml
