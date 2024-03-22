@@ -35,7 +35,9 @@ def add_sa_segmentation_channels_info(omexml: ET.Element, nucleus_channel: str, 
     </XMLAnnotation>
     </StructuredAnnotations>
     """
-    structured_annotation = ET.Element("StructuredAnnotations")
+    structured_annotation = omexml.find("StructuredAnnotations")
+    if structured_annotation is None:
+        structured_annotation = ET.Element("StructuredAnnotations")
     annotation = ET.SubElement(structured_annotation, "XMLAnnotation", {"ID": "Annotation:0"})
     annotation_value = ET.SubElement(annotation, "Value")
     original_metadata = ET.SubElement(annotation_value, "OriginalMetadata")
