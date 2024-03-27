@@ -38,6 +38,7 @@ def add_sa_segmentation_channels_info(omexml: ET.Element, nucleus_channel: str, 
     structured_annotation = omexml.find("StructuredAnnotations")
     if structured_annotation is None:
         structured_annotation = ET.Element("StructuredAnnotations")
+    omexml.append(structured_annotation)
     annotation = ET.SubElement(structured_annotation, "XMLAnnotation", {"ID": "Annotation:0"})
     annotation_value = ET.SubElement(annotation, "Value")
     original_metadata = ET.SubElement(annotation_value, "OriginalMetadata")
@@ -47,7 +48,6 @@ def add_sa_segmentation_channels_info(omexml: ET.Element, nucleus_channel: str, 
     segmentation_channels_value = ET.SubElement(original_metadata, "Value")
     ET.SubElement(segmentation_channels_value, "Nucleus").text = nucleus_channel
     ET.SubElement(segmentation_channels_value, "Cell").text = cell_channel
-    omexml.append(structured_annotation)
 
 
 def physical_size_to_quantity(
