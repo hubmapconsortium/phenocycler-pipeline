@@ -38,7 +38,7 @@ def add_sa_segmentation_channels_info(omexml: ET.Element, nucleus_channel: str, 
     structured_annotation = omexml.find("StructuredAnnotations")
     if structured_annotation is None:
         structured_annotation = ET.Element("StructuredAnnotations")
-    omexml.append(structured_annotation)
+        omexml.append(structured_annotation)
     annotation = ET.SubElement(structured_annotation, "XMLAnnotation", {"ID": "Annotation:0"})
     annotation_value = ET.SubElement(annotation, "Value")
     original_metadata = ET.SubElement(annotation_value, "OriginalMetadata")
@@ -78,27 +78,26 @@ def convert_size_to_nm(px_node: ET.Element):
             px_node.set(f"PhysicalSize{dimension}", str(size_converted.magnitude))
 
 
-def remove_tiffdata(px_node: ET.Element):
+def blank_tiffdata(px_node: ET.Element):
+    tiffdata_list = []
     for td in px_node.findall("TiffData"):
-        px_node.remove(td)
+        td.clear()
+        tiffdata_list.append(td)
+    return tiffdata_list
 
-
-def generate_and_add_new_tiffdata(px_node: ET.Element):
+def generate_and_add_new_tiffdata(px_node: ET.Element, tiffdata_list):
     num_channels = int(px_node.get("SizeC"))
     num_z = int(px_node.get("SizeZ"))
     ifd = 0
+    tiffdata_elements = iter(tiffdata_list)
     for c in range(0, num_channels):
         for z in range(0, num_z):
-            td = ET.Element(
-                "TiffData",
-                {
-                    "FirstT": "0",
-                    "FirstC": str(c),
-                    "FirstZ": str(z),
-                    "IFD": str(ifd),
-                    "PlaneCount": "1",
-                },
-            )
+            td: ET.Element = next(tiffdata_elements)
+            td.set("FirstT", "0")
+            td.set("FirstC", str(c))
+            td.set("FirstZ", str(z))
+            td.set("IFD", str(ifd))
+            td.set("PlaneCount", "1")
             px_node.append(td)
             ifd += 1
 
@@ -121,7 +120,7 @@ def modify_initial_ome_meta(
     px_node.set("PhysicalSizeXUnit", pixel_unit_x)
     px_node.set("PhysicalSizeYUnit", pixel_unit_y)
     convert_size_to_nm(px_node)
-    remove_tiffdata(px_node)
+    blank_tiffdata(px_node)
     generate_and_add_new_tiffdata(px_node)
     add_sa_segmentation_channels_info(
         ome_xml, segmentation_channels["nucleus"], segmentation_channels["cell"]
