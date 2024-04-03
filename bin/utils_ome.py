@@ -98,7 +98,6 @@ def generate_and_add_new_tiffdata(px_node: ET.Element, tiffdata_list):
             td.set("FirstZ", str(z))
             td.set("IFD", str(ifd))
             td.set("PlaneCount", "1")
-            px_node.append(td)
             ifd += 1
 
 
