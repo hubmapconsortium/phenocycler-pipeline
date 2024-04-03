@@ -120,8 +120,8 @@ def modify_initial_ome_meta(
     px_node.set("PhysicalSizeXUnit", pixel_unit_x)
     px_node.set("PhysicalSizeYUnit", pixel_unit_y)
     convert_size_to_nm(px_node)
-    blank_tiffdata(px_node)
-    generate_and_add_new_tiffdata(px_node)
+    tiffdata_list = blank_tiffdata(px_node)
+    generate_and_add_new_tiffdata(px_node, tiffdata_list)
     add_sa_segmentation_channels_info(
         ome_xml, segmentation_channels["nucleus"], segmentation_channels["cell"]
     )
