@@ -1,1 +1,1 @@
-hubmap/mibi-scripts	dockerfiles/Dockerfile_mibi-scripts	base_directory_build
+hubmap/phenocycler-scripts	dockerfiles/Dockerfile_phenocyler-scripts	base_directory_build

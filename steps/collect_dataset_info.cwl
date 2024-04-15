@@ -4,7 +4,7 @@ label: Collect dataset info
 
 requirements:
   DockerRequirement:
-    dockerPull: hubmap/mibi-scripts:latest
+    dockerPull: hubmap/phenocycler-scripts:latest
     dockerOutputDirectory: "/output"
 
 baseCommand: ["python", "/opt/collect_dataset_info.py"]

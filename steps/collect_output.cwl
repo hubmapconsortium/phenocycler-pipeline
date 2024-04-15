@@ -4,7 +4,7 @@ label: Collect segmentation masks and images for the final output
 
 requirements:
   DockerRequirement:
-    dockerPull: hubmap/mibi-scripts:latest
+    dockerPull: hubmap/phenocyler-scripts:latest
     dockerOutputDirectory: "/output"
 
 baseCommand: ["python", "/opt/collect_output.py"]
