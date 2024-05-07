@@ -51,8 +51,8 @@ def get_pixel_size_from_tsv(tsvpath: Path) -> Tuple[float, float, str, str]:
 
 
 def get_segm_channel_ids_from_ome(
-    path: Path,
-    segm_ch_names: Dict[str, Union[str, List[str]]],
+        path: Path,
+        segm_ch_names: Dict[str, Union[str, List[str]]],
 ) -> Tuple[Dict[str, int], Dict[str, str]]:
     """
     Returns a 2-tuple:
@@ -86,7 +86,23 @@ def get_first_img_path(data_dir: Path, listing: Dict[int, Dict[str, Path]]) -> P
     return Path(data_dir / first_img_path).absolute()
 
 
-def main(data_dir: Path, meta_path: Path):
+def get_channel_metadata(data_dir: Path, channels_path: Path):
+    channel_metadata = {}
+    if channels_path is None:
+        for file in data_dir.glob("*.channels.csv"):
+            channels_path = file
+    with open(channels_path, 'r') as csv_file:
+        reader = csv.reader(csv_file)
+        for row in reader:
+            if row[1] == 'Yes':
+                channel_metadata['nucleus'] = row[0]
+            if row[2] == 'Yes':
+                channel_metadata['cells'] = row[0]
+    return channel_metadata
+
+
+def main(data_dir: Path, meta_path: Path, channels_path: Path):
+    channels_metadata = get_channel_metadata(data_dir, channels_path)
     meta = read_meta(meta_path)
     segmentation_channels = meta["segmentation_channels"]
 
@@ -125,6 +141,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_dir", type=Path, help="path to the dataset directory")
     parser.add_argument("--meta_path", type=Path, help="path to dataset metadata yaml")
+    parser.add_argument("--channels_path", type=Path, help="path to the channels.csv file")
     args = parser.parse_args()
 
-    main(args.data_dir, args.meta_path)
+    main(args.data_dir, args.meta_path, args.channels_path)
