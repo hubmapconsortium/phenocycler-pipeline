@@ -20,6 +20,11 @@ inputs:
     inputBinding:
       prefix: "--meta_path"
 
+    channels_path:
+      type: File
+    inputBinding:
+      prefix "--channels_path"
+
 
 outputs:
   pipeline_config:

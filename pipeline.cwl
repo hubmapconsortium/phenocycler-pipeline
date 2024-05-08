@@ -11,6 +11,8 @@ inputs:
     type: Directory
   meta_path:
     type: File
+  channels_path:
+    type: File
 
 outputs:
   pipeline_output:
@@ -25,6 +27,8 @@ steps:
         source: data_dir
       meta_path:
         source: meta_path
+      channels_path:
+      source: channels_Path
     out:
       - pipeline_config
     run: steps/collect_dataset_info.cwl
