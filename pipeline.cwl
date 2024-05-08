@@ -12,7 +12,7 @@ inputs:
   meta_path:
     type: File
   channels_path:
-    type: File
+    type: File?
 
 outputs:
   pipeline_output:
