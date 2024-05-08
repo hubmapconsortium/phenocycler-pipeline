@@ -66,7 +66,7 @@ def get_segm_channel_names_from_ome(path: Path
     adj_segm_ch_names: Dict[str, str] = dict()
     print(channels_metadata)
     nucleus_ch = channels_metadata['nucleus']
-    cells_ch = channels_metadata['cells']
+    cells_ch = channels_metadata['cell']
     print(ch_names_ids)
     for name, channel in ch_names_ids.items():
         if channel == nucleus_ch:
@@ -74,7 +74,7 @@ def get_segm_channel_names_from_ome(path: Path
             adj_segm_ch_names['nucleus'] = name
         elif channel == cells_ch:
             segm_ch_names_ids[name] = channel
-            adj_segm_ch_names['cells'] = name
+            adj_segm_ch_names['cell'] = name
     return segm_ch_names_ids, adj_segm_ch_names
 
 
@@ -131,7 +131,7 @@ def get_channel_metadata(data_dir: Path, channels_path: Path):
             if row[1] == 'Yes':
                 channel_metadata['nucleus'] = ch_id
             if row[2] == 'Yes':
-                channel_metadata['cells'] = ch_id
+                channel_metadata['cell'] = ch_id
     return channel_metadata
 
 

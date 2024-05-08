@@ -7,15 +7,15 @@ from utils_ome import strip_namespace
 # Spec for the metadata is in this spreadsheet
 #
 def test_get_segm_channel_ids_from_ome():
-    result, result2 = get_segm_channel_ids_from_ome(Path("test_files/16-11_Scan1.compressed.ome.tiff"), {"nucleus": ["DAPI"], "cells":["E-cadherin"]})
+    result, result2 = get_segm_channel_ids_from_ome(Path("test_files/16-11_Scan1.compressed.ome.tiff"), {"nucleus": ["DAPI"], "cell":["E-cadherin"]})
     print(result)
     assert result == {'DAPI': 0, 'E-cadherin': 4}
-    assert result2 == {'cells': 'E-cadherin', 'nucleus': 'DAPI'}
+    assert result2 == {'cell': 'E-cadherin', 'nucleus': 'DAPI'}
 
 def test_get_channel_metadata():
     result = get_channel_metadata(Path("test_files"), None)
     print(result)
-    assert result == {'nucleus': 0, 'cells': 4}
+    assert result == {'nucleus': 0, 'cell': 4}
 
 def test_get_channel_metadata_file_misssing():
     result = get_channel_metadata(Path("test_files/empty"), None)
@@ -26,7 +26,7 @@ def test_get_channel_metadata_file_misssing():
 def test_get_segm_channel_names_from_ome():
     result, result2 = get_segm_channel_names_from_ome(
         Path("test_files/16-11_Scan1.compressed.ome.tiff"),
-        {'nucleus': 0, 'cells': 4}
+        {'nucleus': 0, 'cell': 4}
     )
     assert result == {'DAPI': 0, 'E-cadherin': 4}
-    assert result2 == {'cells': 'E-cadherin', 'nucleus': 'DAPI'}
+    assert result2 == {'cell': 'E-cadherin', 'nucleus': 'DAPI'}
