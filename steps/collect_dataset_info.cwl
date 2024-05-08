@@ -22,8 +22,8 @@ inputs:
 
   channels_path:
     type: File
-  inputBinding:
-    prefix "--channels_path"
+    inputBinding:
+      prefix "--channels_path"
 
 
 outputs:
