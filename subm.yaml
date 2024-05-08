@@ -5,7 +5,7 @@ segmentation_method: "deepcell"
 gpus: "0,1,2"
 data_dir:
   class: Directory
-  path: "/hive/users/nengland/phenocycler-pipeline"
+  path: "/hive/users/nengland/phenocycler-pipeline/test_data_set"
 meta_path:
   class: File
   path: "/hive/users/nengland/phenocycler-pipeline/meta.yaml"
