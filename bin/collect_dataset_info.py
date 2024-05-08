@@ -50,6 +50,34 @@ def get_pixel_size_from_tsv(tsvpath: Path) -> Tuple[float, float, str, str]:
     #    )
 
 
+def get_segm_channel_names_from_ome(path: Path
+                                    , channels_metadata: Dict[str, int]
+                                    ) -> Tuple[Dict[str, int], Dict[str, str]]:
+    """
+    Returns a 2-tuple:
+     [0] Mapping from segmentation channel names to 0-based indexes into channel list
+     [1] Adjustment of segm_ch_names listing the first segmentation channel found
+    """
+    with tif.TiffFile(path_to_str(path)) as TF:
+        ome_meta = TF.ome_metadata
+    ome_xml = strip_namespace(ome_meta)
+    ch_names_ids = get_channel_names_from_ome(ome_xml)
+    segm_ch_names_ids: Dict[str, int] = dict()
+    adj_segm_ch_names: Dict[str, str] = dict()
+    print(channels_metadata)
+    nucleus_ch = channels_metadata['nucleus']
+    cells_ch = channels_metadata['cells']
+    print(ch_names_ids)
+    for name, channel in ch_names_ids.items():
+        if channel == nucleus_ch:
+            segm_ch_names_ids[name] = channel
+            adj_segm_ch_names['nucleus'] = name
+        elif channel == cells_ch:
+            segm_ch_names_ids[name] = channel
+            adj_segm_ch_names['cells'] = name
+    return segm_ch_names_ids, adj_segm_ch_names
+
+
 def get_segm_channel_ids_from_ome(
         path: Path,
         segm_ch_names: Dict[str, Union[str, List[str]]],
@@ -91,24 +119,24 @@ def get_channel_metadata(data_dir: Path, channels_path: Path):
     if channels_path is None:
         for file in data_dir.glob("*.channels.csv"):
             channels_path = file
+        if channels_path is None:
+            print("No *.channels.csv file found in " + str(data_dir))
+            return None
     with open(channels_path, 'r') as csv_file:
         reader = csv.reader(csv_file)
         for row in reader:
+            ch_id = int(row[0].split(":")[-1])
             if row[1] == 'Yes':
-                channel_metadata['nucleus'] = row[0]
+                channel_metadata['nucleus'] = ch_id
             if row[2] == 'Yes':
-                channel_metadata['cells'] = row[0]
+                channel_metadata['cells'] = ch_id
     return channel_metadata
 
 
 def main(data_dir: Path, meta_path: Path, channels_path: Path):
-    channels_metadata = get_channel_metadata(data_dir, channels_path)
-    meta = read_meta(meta_path)
-    segmentation_channels = meta["segmentation_channels"]
 
     out_dir = Path("/output")
     make_dir_if_not_exists(out_dir)
-
     first_img_path = data_dir / "3D_image_stack.ome.tiff"
 
     for image_file in data_dir.glob("*.tsv"):
@@ -116,9 +144,17 @@ def main(data_dir: Path, meta_path: Path, channels_path: Path):
         # tsv_path = data_dir.glob("*.ome.tsv")
         x_size, y_size, x_unit, y_unit = get_pixel_size_from_tsv(tsv_path)
 
-    segm_ch_names_ids, adj_segmentation_channels = get_segm_channel_ids_from_ome(
-        first_img_path, segmentation_channels
-    )
+    channels_metadata = get_channel_metadata(data_dir, channels_path)
+    if channels_metadata is None:
+        meta = read_meta(meta_path)
+        segmentation_channels = meta["segmentation_channels"]
+        segm_ch_names_ids, adj_segmentation_channels = get_segm_channel_ids_from_ome(
+            first_img_path, segmentation_channels
+        )
+    else:
+        segm_ch_names_ids, adj_segmentation_channels = get_segm_channel_names_from_ome(
+            first_img_path, channels_metadata
+        )
 
     listing = {first_img_path.name.split(".")[0]: first_img_path.relative_to(data_dir)}
 
