@@ -28,7 +28,8 @@ steps:
       meta_path:
         source: meta_path
       channels_path:
-      source: channels_Path
+        source: channels_path
+
     out:
       - pipeline_config
     run: steps/collect_dataset_info.cwl

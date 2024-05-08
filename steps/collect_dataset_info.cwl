@@ -20,10 +20,10 @@ inputs:
     inputBinding:
       prefix: "--meta_path"
 
-    channels_path:
-      type: File
+  channels_path:
+    type: File
     inputBinding:
-      prefix "--channels_path"
+      prefix: "--channels_path"
 
 
 outputs:
