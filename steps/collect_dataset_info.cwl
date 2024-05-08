@@ -21,7 +21,7 @@ inputs:
       prefix: "--meta_path"
 
   channels_path:
-    type: File
+    type: File?
     inputBinding:
       prefix: "--channels_path"
 

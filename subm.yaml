@@ -2,10 +2,10 @@
 #segmentation cellpose or deepcell
 segmentation_method: "deepcell"
 # comma separated list of gpu ids, e.g. "0,1,2"
-gpus: "0"
+gpus: "0,1,2"
 data_dir:
   class: Directory
-  path: "/path/to/dir/with/region_dirs/"
+  path: "/hive/users/nengland/phenocycler-pipeline"
 meta_path:
   class: File
-  path: "some/path/meta.yaml"
+  path: "/hive/users/nengland/phenocycler-pipeline/meta.yaml"
