@@ -116,6 +116,8 @@ def get_first_img_path(data_dir: Path, listing: Dict[int, Dict[str, Path]]) -> P
 
 def get_channel_metadata(data_dir: Path, channels_path: Path):
     channel_metadata = {}
+    if channels_path is not None and not channels_path.exists():
+        print("Error no " + str(channels_path))
     if channels_path is None:
         for file in data_dir.glob("*.channels.csv"):
             channels_path = file
