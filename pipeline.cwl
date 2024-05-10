@@ -10,7 +10,7 @@ inputs:
   data_dir:
     type: Directory
   meta_path:
-    type: File
+    type: File?
   channels_path:
     type: File?
 

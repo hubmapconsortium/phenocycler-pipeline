@@ -16,7 +16,7 @@ inputs:
       prefix: "--data_dir"
 
   meta_path:
-    type: File
+    type: File?
     inputBinding:
       prefix: "--meta_path"
 
