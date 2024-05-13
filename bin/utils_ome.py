@@ -92,13 +92,18 @@ def generate_and_add_new_tiffdata(px_node: ET.Element, tiffdata_list):
     tiffdata_elements = iter(tiffdata_list)
     for c in range(0, num_channels):
         for z in range(0, num_z):
-            td: ET.Element = next(tiffdata_elements)
+            td = None
+            try:
+                td = next(tiffdata_elements)
+            except StopIteration as e:
+                td = ET.Element('TiffData')
             td.set("FirstT", "0")
             td.set("FirstC", str(c))
             td.set("FirstZ", str(z))
             td.set("IFD", str(ifd))
             td.set("PlaneCount", "1")
             ifd += 1
+
 
 
 def modify_initial_ome_meta(
