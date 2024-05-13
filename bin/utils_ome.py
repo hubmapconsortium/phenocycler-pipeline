@@ -1,8 +1,9 @@
 import html
 import unicodedata
 from io import StringIO
+from io import BytesIO
 from typing import Dict, Literal, Optional
-from xml.etree import ElementTree as ET
+import lxml.etree as ET
 
 from pint import Quantity, UnitRegistry
 
@@ -11,7 +12,7 @@ reg = UnitRegistry()
 
 
 def strip_namespace(xmlstr: str):
-    it = ET.iterparse(StringIO(xmlstr))
+    it = ET.iterparse(BytesIO(xmlstr.encode('utf-8')))
     for _, el in it:
         _, _, el.tag = el.tag.rpartition("}")
     root = it.root
@@ -81,8 +82,14 @@ def convert_size_to_nm(px_node: ET.Element):
 def blank_tiffdata(px_node: ET.Element):
     tiffdata_list = []
     for td in px_node.findall("TiffData"):
+        count = int(td.get("PlaneCount"))
         td.clear()
         tiffdata_list.append(td)
+        if count > 1:
+            for x in range(1, count):
+                child_td = ET.Element("TiffData")
+                px_node.insert(px_node.index(td) + x, child_td)
+                tiffdata_list.append(child_td)
     return tiffdata_list
 
 def generate_and_add_new_tiffdata(px_node: ET.Element, tiffdata_list):
@@ -96,7 +103,7 @@ def generate_and_add_new_tiffdata(px_node: ET.Element, tiffdata_list):
             try:
                 td = next(tiffdata_elements)
             except StopIteration as e:
-                td = ET.Element('TiffData')
+                print('Error: not enough TiffData Elements in ',ET.tostring(px_node))
             td.set("FirstT", "0")
             td.set("FirstC", str(c))
             td.set("FirstZ", str(z))
@@ -116,7 +123,7 @@ def modify_initial_ome_meta(
 ):
     new_dim_order = "XYZCT"
     ome_xml: ET.Element = strip_namespace(xml_str)
-    ome_xml.set("xmlns", "http://www.openmicroscopy.org/Schemas/OME/2016-06")
+    #ome_xml.set("xmlns", "http://www.openmicroscopy.org/Schemas/OME/2016-06")
     px_node = ome_xml.find("Image").find("Pixels")
     px_node.set("DimensionOrder", new_dim_order)
     px_node.set("PhysicalSizeX", str(pixel_size_x))
