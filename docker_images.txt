@@ -1,1 +1,3 @@
 hubmap/phenocycler-scripts	dockerfiles/Dockerfile_phenocyler-scripts	base_directory_build
+hubmap/ome-tiff-pyramid ome-tiff-pyramid/docker/Dockerfile       base_directory_build
+
