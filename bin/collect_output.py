@@ -186,7 +186,7 @@ def collect_expr(
     pixel_unit_y: str,
     antb_df: pd.DataFrame,
 ):
-    for image_file in data_dir.glob("*.ome.tiff"):
+    for image_file in data_dir.glob("*.qptiff"):
         filename_base = image_file.name.split(".")[0]
         new_filename = f"{filename_base}_expr.ome.tiff"
         output_file = out_dir / new_filename
@@ -204,7 +204,12 @@ def collect_expr(
         )
 
 
-def main(data_dir: Path, mask_dir: Path, pipeline_config_path: Path):
+def collect_ome_tiff(ome_tiff: Path, out_dir: Path):
+    output_file = out_dir / ome_tiff.name
+    shutil.copy(ome_tiff, output_file)
+
+
+def main(data_dir: Path, mask_dir: Path, pipeline_config_path: Path, ome_tiff: Path):
     pipeline_config = read_pipeline_config(pipeline_config_path)
     listing = pipeline_config["dataset_map_all_slices"]
     segmentation_channels = pipeline_config["segmentation_channels"]
@@ -239,6 +244,8 @@ def main(data_dir: Path, mask_dir: Path, pipeline_config_path: Path):
         pixel_unit_y,
         antb_info,
     )
+    print("Collecting ome tiff")
+    collect_ome_tiff(ome_tiff, out_dir)
 
 
 if __name__ == "__main__":
@@ -246,6 +253,7 @@ if __name__ == "__main__":
     parser.add_argument("--data_dir", type=Path, help="path to directory with images")
     parser.add_argument("--mask_dir", type=Path, help="path to directory with segmentation masks")
     parser.add_argument("--pipeline_config", type=Path, help="path to region map file YAML")
+    parser.add_argument("--ome_tiff", type=Path, help="path to the converted ome.tiff file")
     args = parser.parse_args()
 
-    main(args.data_dir, args.mask_dir, args.pipeline_config)
+    main(args.data_dir, args.mask_dir, args.pipeline_config, args.ome_tiff)

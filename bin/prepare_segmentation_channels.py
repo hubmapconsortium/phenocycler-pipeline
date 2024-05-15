@@ -64,7 +64,7 @@ def copy_channels(
 
 
 def copy_segm_channels_to_out_dirs(
-    data_dir: Path,
+    img_path: Path,
     listing: Dict[int, Dict[str, str]],
     segmentation_channels: Dict[str, str],
     segmentation_channel_ids: Dict[str, int],
@@ -73,7 +73,7 @@ def copy_segm_channels_to_out_dirs(
     tasks = []
     segm_ch_index = change_vals_to_keys(segmentation_channels)
     for img_slice_name, path in listing.items():
-        img_path = data_dir / "converted.ome.tiff"
+        #img_path = data_dir / "converted.ome.tiff"
         task = dask.delayed(copy_channels)(
             out_dir,
             img_path,
@@ -85,14 +85,13 @@ def copy_segm_channels_to_out_dirs(
     dask.compute(*tasks)
 
 
-def main(data_dir: Path, pipeline_config_path: Path):
+def main(data_dir: Path, pipeline_config_path: Path, ome_tiff: Path):
     print("data_dir contents:")
     from pprint import pprint
 
     pprint(list(data_dir.iterdir()))
 
     pipeline_config = read_pipeline_config(pipeline_config_path)
-
     segm_ch_out_dir = Path("/output") / "segmentation_channels"
     make_dir_if_not_exists(segm_ch_out_dir)
 
@@ -103,13 +102,14 @@ def main(data_dir: Path, pipeline_config_path: Path):
 
     dask.config.set({"num_workers": 5, "scheduler": "processes"})
 
-    copy_segm_channels_to_out_dirs(data_dir, listing, segm_ch, segm_ch_ids, segm_ch_out_dir)
+    copy_segm_channels_to_out_dirs(ome_tiff, listing, segm_ch, segm_ch_ids, segm_ch_out_dir)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_dir", type=Path, help="path to the dataset directory")
     parser.add_argument("--pipeline_config", type=Path, help="path to dataset metadata yaml")
+    parser.add_argument("--ome_tiff", type=Path, help="path to the converted ome.tiff file")
     args = parser.parse_args()
 
-    main(args.data_dir, args.pipeline_config)
+    main(args.data_dir, args.pipeline_config, args.ome_tiff)

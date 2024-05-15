@@ -20,6 +20,11 @@ inputs:
     inputBinding:
       prefix: "--pipeline_config"
 
+  ome_tiff:
+    type: File
+    inputBinding:
+      prefix: "--ome_tiff"
+
 
 outputs:
   segmentation_channels:

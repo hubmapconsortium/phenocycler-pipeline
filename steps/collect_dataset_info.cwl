@@ -25,6 +25,10 @@ inputs:
     inputBinding:
       prefix: "--channels_path"
 
+  ome_tiff:
+    type: File
+    inputBinding:
+      prefix: "--ome_tiff"
 
 outputs:
   pipeline_config:

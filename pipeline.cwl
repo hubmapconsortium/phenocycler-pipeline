@@ -32,11 +32,13 @@ steps:
   collect_dataset_info:
     in:
       data_dir:
-        source: convert_to_bioformats/ome_tiff
+        source: data_dir
       meta_path:
         source: meta_path
       channels_path:
         source: channels_path
+      ome_tiff:
+        source: convert_to_bioformats/ome_tiff
 
     out:
       - pipeline_config
@@ -48,6 +50,8 @@ steps:
         source: data_dir
       pipeline_config:
         source: collect_dataset_info/pipeline_config
+      ome_tiff:
+        source: convert_to_bioformats/ome_tiff
     out:
       - segmentation_channels
     run: steps/prepare_segmentation_channels.cwl
@@ -72,6 +76,8 @@ steps:
         source: run_segmentation/mask_dir
       pipeline_config:
         source: collect_dataset_info/pipeline_config
+      ome_tiff:
+        source: convert_to_bioformats/ome_tiff
     out:
       - pipeline_output
     run: steps/collect_output.cwl
