@@ -161,7 +161,7 @@ def main(data_dir: Path, meta_path: Path, channels_path: Path, ome_tiff: Path):
             first_img_path, channels_metadata
         )
 
-    listing = {first_img_path.name.split(".")[0]: first_img_path.relative_to(data_dir)}
+    listing = {first_img_path.name.split(".")[0]: first_img_path}
 
     listing_str = convert_all_paths_to_str(listing)
 
