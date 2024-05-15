@@ -14,6 +14,7 @@ requirements:
           echo Running on \${file[0]}
           /opt/bioformats2raw/bin/bioformats2raw \${file[0]} /output/pipeline_output/converted.raw
           /opt/raw2ometiff/bin/raw2ometiff /output/pipeline_output/converted.raw /output/pipeline_output/converted.ome.tiff
+          cp *.channels.csv /output/
 
 arguments:
  - '$(inputs.data_dir)'
@@ -26,6 +27,6 @@ inputs:
 
 outputs:
   ome_tiff:
-    type: File
+    type: Directory
     outputBinding:
-      glob: "/output/pipeline_output/converted.ome.tiff"
+      glob: "/output/pipeline_output/"

@@ -32,8 +32,6 @@ steps:
   collect_dataset_info:
     in:
       data_dir:
-        source: data_dir
-      ome_tiff:
         source: convert_to_bioformats/ome_tiff
       meta_path:
         source: meta_path
