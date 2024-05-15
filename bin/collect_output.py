@@ -185,12 +185,13 @@ def collect_expr(
     pixel_unit_x: str,
     pixel_unit_y: str,
     antb_df: pd.DataFrame,
+    ome_tiff: Path
 ):
     for image_file in data_dir.glob("*.qptiff"):
         filename_base = image_file.name.split(".")[0]
         new_filename = f"{filename_base}_expr.ome.tiff"
         output_file = out_dir / new_filename
-        new_xml = update_omexml(image_file, antb_df)
+        new_xml = update_omexml(ome_tiff, antb_df)
 
         modify_and_save_img(
             image_file,
@@ -243,6 +244,7 @@ def main(data_dir: Path, mask_dir: Path, pipeline_config_path: Path, ome_tiff: P
         pixel_unit_x,
         pixel_unit_y,
         antb_info,
+        ome_tiff
     )
     print("Collecting ome tiff")
     collect_ome_tiff(ome_tiff, out_dir)
