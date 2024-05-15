@@ -139,7 +139,7 @@ def main(data_dir: Path, meta_path: Path, channels_path: Path):
 
     out_dir = Path("/output")
     make_dir_if_not_exists(out_dir)
-    first_img_path = data_dir / "3D_image_stack.ome.tiff"
+    first_img_path = data_dir / "converted.ome.tiff"
 
     for image_file in data_dir.glob("*.tsv"):
         tsv_path = image_file

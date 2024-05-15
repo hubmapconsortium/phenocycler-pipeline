@@ -21,10 +21,20 @@ outputs:
     label: "Expressions and segmentation masks in OME-TIFF format"
 
 steps:
+  convert_to_bioformats:
+    in:
+      data_dir:
+        source: data_dir
+    out:
+      - ome_tiff
+    run: steps/convert_to_bioformats.cwl
+
   collect_dataset_info:
     in:
       data_dir:
         source: data_dir
+      ome_tiff:
+        source: convert_to_bioformats/ome_tiff
       meta_path:
         source: meta_path
       channels_path:
