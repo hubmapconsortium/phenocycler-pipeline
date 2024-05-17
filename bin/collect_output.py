@@ -194,7 +194,7 @@ def collect_expr(
         new_xml = update_omexml(ome_tiff, antb_df)
 
         modify_and_save_img(
-            image_file,
+            ome_tiff,
             output_file,
             segmentation_channels,
             pixel_size_x,
