@@ -4,7 +4,7 @@ label: Convert a QPTiff file to a raw file
 
 requirements:
   DockerRequirement:
-    dockerPull: hubmap/ome-tiff-pyramid:latest
+    dockerPull: hubmap/ome-tiff-pyramid:1.6
     dockerOutputDirectory: "/output"
   InitialWorkDirRequirement:
     listing:
