@@ -76,8 +76,6 @@ steps:
         source: run_segmentation/mask_dir
       pipeline_config:
         source: collect_dataset_info/pipeline_config
-      ome_tiff:
-        source: convert_to_bioformats/ome_tiff
     out:
       - pipeline_output
     run: steps/collect_output.cwl
