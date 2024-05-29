@@ -12,7 +12,7 @@ requirements:
         entry: |-
           file=($1/*.qptiff)
           echo Running on \${file[0]}
-          /opt/bioformats2raw/bin/bioformats2raw \${file[0]} /output/converted.raw
+          /opt/bioformats2raw/bin/bioformats2raw --series 0 \${file[0]} /output/converted.raw
           /opt/raw2ometiff/bin/raw2ometiff /output/converted.raw /output/converted.ome.tiff
 
 arguments:
