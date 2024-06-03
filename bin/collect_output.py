@@ -246,9 +246,7 @@ def main(data_dir: Path, mask_dir: Path, pipeline_config_path: Path, ome_tiff: P
         antb_info,
         ome_tiff
     )
-    if ome_tiff is not None:
-        print("Collecting ome tiff")
-        collect_ome_tiff(ome_tiff, out_dir)
+    #collect_ome_tiff(ome_tiff, out_dir)
 
 
 if __name__ == "__main__":

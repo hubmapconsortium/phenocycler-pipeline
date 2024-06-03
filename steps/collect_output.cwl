@@ -26,7 +26,7 @@ inputs:
       prefix: "--pipeline_config"
 
   ome_tiff:
-    type: File?
+    type: File
     inputBinding:
       prefix: "--ome_tiff"
 
