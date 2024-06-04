@@ -120,7 +120,7 @@ def modify_initial_ome_meta(
     pixel_size_y: float,
     pixel_unit_x: str,
     pixel_unit_y: str,
-):
+) -> bytes:
     new_dim_order = "XYZCT"
     ome_xml: ET.Element = strip_namespace(xml_str)
     #ome_xml.set("xmlns", "http://www.openmicroscopy.org/Schemas/OME/2016-06")
@@ -136,6 +136,5 @@ def modify_initial_ome_meta(
     add_sa_segmentation_channels_info(
         ome_xml, segmentation_channels["nucleus"], segmentation_channels["cell"]
     )
-    new_xml_str = ET.tostring(ome_xml).decode("ascii")
-    res = '<?xml version="1.0" encoding="utf-8"?>\n' + new_xml_str
+    res = ET.tostring(ome_xml, encoding='UTF-8', xml_declaration=True)
     return res
