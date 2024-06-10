@@ -142,6 +142,7 @@ def modify_and_save_img(
             contiguous=True,
             photometric="minisblack",
             description=new_ome_meta,
+            metadata=None
         )
 
 
