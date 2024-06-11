@@ -136,7 +136,8 @@ def modify_and_save_img(
     new_ome_meta = modify_initial_ome_meta(
         ome_meta, segmentation_channels, pixel_size_x, pixel_size_y, pixel_unit_x, pixel_unit_y
     )
-    with tif.TiffWriter(path_to_str(out_path), bigtiff=True) as TW:
+
+    with tif.TiffWriter(path_to_str(out_path), bigtiff=True, shaped=False) as TW:
         TW.write(
             new_img_stack,
             contiguous=True,
