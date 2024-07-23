@@ -7,7 +7,7 @@ RUN apt-get -qq update \
     tar \
     ca-certificates \
     curl \
-    libXau \
+    libxau-dev \
     unzip \
     git \
     && apt-get clean \
