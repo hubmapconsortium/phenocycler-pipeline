@@ -29,6 +29,14 @@ steps:
       - ome_tiff
     run: steps/convert_to_bioformats.cwl
 
+    section_aligner:
+      in:
+        ome_tiff:
+          source: convert_to_bioformats/ome_tiff
+      out:
+       - crop_ome_tiff
+      run: steps/run_section_aligner.cwl
+
   collect_dataset_info:
     in:
       data_dir:
@@ -38,7 +46,7 @@ steps:
       channels_path:
         source: channels_path
       ome_tiff:
-        source: convert_to_bioformats/ome_tiff
+        source: section_aligner/crop_ome_tiff
 
     out:
       - pipeline_config
@@ -51,7 +59,7 @@ steps:
       pipeline_config:
         source: collect_dataset_info/pipeline_config
       ome_tiff:
-        source: convert_to_bioformats/ome_tiff
+        source: section_aligner/crop_ome_tiff
     out:
       - segmentation_channels
     run: steps/prepare_segmentation_channels.cwl
@@ -77,7 +85,7 @@ steps:
       pipeline_config:
         source: collect_dataset_info/pipeline_config
       ome_tiff:
-        source: convert_to_bioformats/ome_tiff
+        source: section_aligner/crop_ome_tiff
     out:
       - pipeline_output
     run: steps/collect_output.cwl
