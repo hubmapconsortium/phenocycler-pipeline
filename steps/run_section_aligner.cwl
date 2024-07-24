@@ -5,10 +5,11 @@ label: Run Section Aligner to take out a single section of tissue and crop
 requirements:
   DockerRequirement:
     dockerPull: hubmap/phenocycler-scripts:latest
-    dockerOutputDirectory: "/outputs"
+    dockerOutputDirectory: "/output"
 
 arguments:
  - '--crop_only'
+ - '--output_dir=/output'
 baseCommand: ["python", "/opt/section_aligner.py"]
 
 inputs:
@@ -21,7 +22,7 @@ inputs:
 
 
 outputs:
-  ome_tiff:
+  crop_ome_tiff:
     type: File
     outputBinding:
-      glob: "/outputs/aligned_tissue_*.ome.tiff"
+      glob: "/output/aligned_tissue_0.ome.tif"
