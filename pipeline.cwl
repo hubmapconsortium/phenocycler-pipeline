@@ -29,13 +29,13 @@ steps:
       - ome_tiff
     run: steps/convert_to_bioformats.cwl
 
-    section_aligner:
-      in:
-        ome_tiff:
-          source: convert_to_bioformats/ome_tiff
-      out:
-       - crop_ome_tiff
-      run: steps/run_section_aligner.cwl
+  section_aligner:
+    in:
+      ome_tiff:
+       source: convert_to_bioformats/ome_tiff
+    out:
+     - crop_ome_tiff
+    run: steps/run_section_aligner.cwl
 
   collect_dataset_info:
     in:
