@@ -10,6 +10,7 @@ requirements:
 arguments:
  - '--crop_only'
  - '--output_dir=/output'
+ - '--num_tissue=1'
 baseCommand: ["python", "/opt/section_aligner.py"]
 
 inputs:
