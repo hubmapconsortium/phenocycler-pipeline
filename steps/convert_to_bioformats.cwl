@@ -10,7 +10,7 @@ requirements:
     listing:
       - entryname: script.sh
         entry: |-
-          file=($1/raw/images*.qptiff)
+          file=($1/raw/images/*.qptiff)
           if [ -f \${file[0]} ]; then
             echo "Running on \${file[0]}"
           else
