@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
 import tifffile as tif
+from ome_utils import get_physical_size_quantities
 import yaml
 
 from dataset_path_arrangement import create_listing_for_each_region
@@ -28,6 +29,15 @@ def convert_all_paths_to_str(listing: dict) -> Dict[int, Dict[str, str]]:
     for channel_name, ch_path in listing.items():
         all_ch_dirs[channel_name] = path_to_str_local(ch_path)
     return all_ch_dirs
+
+
+def get_pixel_size_from_img(img) -> Tuple[float, float, str, str]:
+    dimensions = get_physical_size_quantities(img)
+    pixel_size_x = dimensions["X"].magnitude
+    pixel_size_y = dimensions["Y"].magnitude
+    pixel_unit_x = format(dimensions["X"].units, '~')
+    pixel_unit_y = format(dimensions["Y"].units, '~')
+    return pixel_size_x, pixel_size_y, pixel_unit_x, pixel_unit_y
 
 
 def get_pixel_size_from_tsv(tsvpath: Path) -> Tuple[float, float, str, str]:
@@ -136,7 +146,6 @@ def get_channel_metadata(data_dir: Path, channels_path: Path):
 
 
 def main(data_dir: Path, meta_path: Path, channels_path: Path, ome_tiff: Path):
-
     out_dir = Path("/output")
     make_dir_if_not_exists(out_dir)
     if ome_tiff is not None:
@@ -144,10 +153,12 @@ def main(data_dir: Path, meta_path: Path, channels_path: Path, ome_tiff: Path):
     else:
         first_img_path = data_dir / "converted.ome.tiff"
 
-    for image_file in data_dir.glob("*.tsv"):
-        tsv_path = image_file
+    x_size, y_size, x_unit, y_unit = get_pixel_size_from_img(first_img_path)
+
+    #for image_file in data_dir.glob("*.tsv"):
+     #   tsv_path = image_file
         # tsv_path = data_dir.glob("*.ome.tsv")
-        x_size, y_size, x_unit, y_unit = get_pixel_size_from_tsv(tsv_path)
+        #x_size, y_size, x_unit, y_unit = get_pixel_size_from_tsv(tsv_path)
 
     channels_metadata = get_channel_metadata(data_dir, channels_path)
     if channels_metadata is None:
