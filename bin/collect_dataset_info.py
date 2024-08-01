@@ -31,8 +31,8 @@ def convert_all_paths_to_str(listing: dict) -> Dict[int, Dict[str, str]]:
     return all_ch_dirs
 
 
-def get_pixel_size_from_img(img) -> Tuple[float, float, str, str]:
-    dimensions = get_physical_size_quantities(img)
+def get_pixel_size_from_img(img: Path) -> Tuple[float, float, str, str]:
+    dimensions = get_physical_size_quantities(tif.TiffFile(img))
     pixel_size_x = dimensions["X"].magnitude
     pixel_size_y = dimensions["Y"].magnitude
     pixel_unit_x = format(dimensions["X"].units, '~')
