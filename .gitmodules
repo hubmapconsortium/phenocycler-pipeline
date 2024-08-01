@@ -1,6 +1,3 @@
-[submodule "ome-tiff-pyramid"]
-	path = ome-tiff-pyramid
-	url = git@github.com:hubmapconsortium/ome-tiff-pyramid.git
 [submodule "SectionAligner"]
 	path = SectionAligner
 	url = git@github.com:hubmapconsortium/SectionAligner.git
