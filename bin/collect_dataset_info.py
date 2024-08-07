@@ -61,7 +61,7 @@ def get_pixel_size_from_tsv(tsvpath: Path) -> Tuple[float, float, str, str]:
 
 
 def get_segm_channel_names_from_ome(path: Path
-                                    , channels_metadata: Dict[str, int]
+                                    , channels_metadata: Dict[str, str]
                                     ) -> Tuple[Dict[str, int], Dict[str, str]]:
     """
     Returns a 2-tuple:
@@ -79,11 +79,11 @@ def get_segm_channel_names_from_ome(path: Path
     cells_ch = channels_metadata['cell']
     print(ch_names_ids)
     for name, channel in ch_names_ids.items():
-        if channel == nucleus_ch:
-            segm_ch_names_ids[name] = channel
+        if channel[0] == nucleus_ch:
+            segm_ch_names_ids[name] = channel[1]
             adj_segm_ch_names['nucleus'] = name
-        elif channel == cells_ch:
-            segm_ch_names_ids[name] = channel
+        elif channel[0] == cells_ch:
+            segm_ch_names_ids[name] = channel[1]
             adj_segm_ch_names['cell'] = name
     return segm_ch_names_ids, adj_segm_ch_names
 
@@ -108,7 +108,7 @@ def get_segm_channel_ids_from_ome(
             name_or_names = [name_or_names]
         for name in name_or_names:
             try:
-                segm_ch_names_ids[name] = ch_names_ids[name]
+                segm_ch_names_ids[name] = ch_names_ids[name][1]
                 adj_segm_ch_names[ch_type] = name
                 break
             except KeyError:
@@ -137,9 +137,13 @@ def get_channel_metadata(data_dir: Path, channels_path: Path):
     with open(channels_path, 'r') as csv_file:
         reader = csv.reader(csv_file)
         for row in reader:
-            ch_id = int(row[0].split(":")[-1])
+            if row[0] == "channel_id" or row[0] == "channel id":
+                print(channels_path, " has header row ", row, ". Please delete it and resubmit")
+            ch_id = row[0]
             if row[1] == 'Yes':
                 channel_metadata['nucleus'] = ch_id
+            elif row[1] != 'No':
+                print("Value should be 'Yes' or 'No' not, ", row[1])
             if row[2] == 'Yes':
                 channel_metadata['cell'] = ch_id
     return channel_metadata
@@ -161,6 +165,7 @@ def main(data_dir: Path, meta_path: Path, channels_path: Path, ome_tiff: Path):
         #x_size, y_size, x_unit, y_unit = get_pixel_size_from_tsv(tsv_path)
 
     channels_metadata = get_channel_metadata(data_dir, channels_path)
+
     if channels_metadata is None:
         meta = read_meta(meta_path)
         segmentation_channels = meta["segmentation_channels"]

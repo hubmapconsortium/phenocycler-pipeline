@@ -21,7 +21,7 @@ def test_get_segm_channel_ids_from_ome():
 def test_get_channel_metadata():
     result = get_channel_metadata(Path("test_files"), None)
     print(result)
-    assert result == {'nucleus': 0, 'cell': 4}
+    assert result == {'nucleus': "Channel:0:0", 'cell': "Channel:0:4"}
 
 
 def test_get_channel_metadata_file_misssing():
@@ -33,17 +33,18 @@ def test_get_channel_metadata_file_misssing():
 def test_get_segm_channel_names_from_ome():
     result, result2 = get_segm_channel_names_from_ome(
         Path("test_files/16-11_Scan1.compressed.ome.tiff"),
-        {'nucleus': 0, 'cell': 4}
+        {'nucleus': "Channel:0:0", 'cell': "Channel:0:4"}
     )
     assert result == {'DAPI': 0, 'E-cadherin': 4}
     assert result2 == {'cell': 'E-cadherin', 'nucleus': 'DAPI'}
 
 
 def test_get_pixel_size_from_img():
-    with tif.TiffFile("test_files/16-11_Scan1.compressed.ome.tiff") as TF:
+    file_path = "test_files/16-11_Scan1.compressed.ome.tiff"
+    with tif.TiffFile(file_path) as TF:
         dimensions = get_physical_size_quantities(TF)
         print(dimensions)
         print(dimensions["X"].magnitude)
         print(format(dimensions["X"].units, '~'))
-        results = get_pixel_size_from_img(TF)
+        results = get_pixel_size_from_img(file_path)
         assert results == (0.5082855933597976, 0.5082855933597976, "µm", "µm")
