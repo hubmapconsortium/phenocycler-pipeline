@@ -38,6 +38,13 @@ def test_get_segm_channel_names_from_ome():
     assert result == {'DAPI': 0, 'E-cadherin': 4}
     assert result2 == {'cell': 'E-cadherin', 'nucleus': 'DAPI'}
 
+def test_get_segm_channel_names_from_ome_no_id():
+    result, result2 = get_segm_channel_names_from_ome(
+        Path("test_files/16-11_Scan1.compressed.ome.tiff"),
+        {'nucleus': "DAPI", 'cell': "E-cadherin"}
+    )
+    assert result == {'DAPI': 0, 'E-cadherin': 4}
+    assert result2 == {'cell': 'E-cadherin', 'nucleus': 'DAPI'}
 
 def test_get_pixel_size_from_img():
     file_path = "test_files/16-11_Scan1.compressed.ome.tiff"

@@ -85,6 +85,14 @@ def get_segm_channel_names_from_ome(path: Path
         elif channel[0] == cells_ch:
             segm_ch_names_ids[name] = channel[1]
             adj_segm_ch_names['cell'] = name
+    if adj_segm_ch_names.get('nucleus') is None:
+        print("No matching channel id found, trying channel name")
+        channel = ch_names_ids.get(nucleus_ch)
+        segm_ch_names_ids[nucleus_ch] = channel[1]
+        adj_segm_ch_names['nucleus'] = nucleus_ch
+        channel = ch_names_ids.get(cells_ch)
+        segm_ch_names_ids[cells_ch] = channel[1]
+        adj_segm_ch_names['cell'] = cells_ch
     return segm_ch_names_ids, adj_segm_ch_names
 
 
@@ -137,14 +145,14 @@ def get_channel_metadata(data_dir: Path, channels_path: Path):
     with open(channels_path, 'r') as csv_file:
         reader = csv.reader(csv_file)
         for row in reader:
-            if row[0] == "channel_id" or row[0] == "channel id":
+            if row[0].casefold() == "channel_id" or row[0].casefold() == "channel id":
                 print(channels_path, " has header row ", row, ". Please delete it and resubmit")
             ch_id = row[0]
-            if row[1] == 'Yes':
+            if row[1].casefold() == 'Yes'.casefold():
                 channel_metadata['nucleus'] = ch_id
-            elif row[1] != 'No':
+            elif row[1].casefold() != 'No'.casefold():
                 print("Value should be 'Yes' or 'No' not, ", row[1])
-            if row[2] == 'Yes':
+            if row[2].casefold() == 'Yes'.casefold():
                 channel_metadata['cell'] = ch_id
     return channel_metadata
 
