@@ -86,12 +86,20 @@ def get_segm_channel_names_from_ome(path: Path
             segm_ch_names_ids[name] = channel[1]
             adj_segm_ch_names['cell'] = name
     if adj_segm_ch_names.get('nucleus') is None:
-        print("No matching channel id found, trying channel name")
+        print("No matching nucleus channel id found, trying channel name")
         channel = ch_names_ids.get(nucleus_ch)
-        segm_ch_names_ids[nucleus_ch] = channel[1]
+        if channel is None:
+            raise Exception("No match in channels.csv for ", nucleus_ch)
+        channel_id, channel_num = channel
+        segm_ch_names_ids[nucleus_ch] = channel_num
         adj_segm_ch_names['nucleus'] = nucleus_ch
+    if adj_segm_ch_names.get('cell') is None:
+        print("No matching cell channel id found, trying channel name")
         channel = ch_names_ids.get(cells_ch)
-        segm_ch_names_ids[cells_ch] = channel[1]
+        if channel is None:
+            raise Exception("No match in channels.csv for ", cells_ch)
+        channel_id, channel_num = channel
+        segm_ch_names_ids[cells_ch] = channel_num
         adj_segm_ch_names['cell'] = cells_ch
     return segm_ch_names_ids, adj_segm_ch_names
 

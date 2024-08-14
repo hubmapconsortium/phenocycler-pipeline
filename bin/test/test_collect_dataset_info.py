@@ -46,6 +46,14 @@ def test_get_segm_channel_names_from_ome_no_id():
     assert result == {'DAPI': 0, 'E-cadherin': 4}
     assert result2 == {'cell': 'E-cadherin', 'nucleus': 'DAPI'}
 
+def test_get_segm_channel_names_from_ome_no_id_error():
+    with pytest.raises(Exception):
+        result, result2 = get_segm_channel_names_from_ome(
+            Path("test_files/16-11_Scan1.compressed.ome.tiff"),
+            {'nucleus': "DAPI2", 'cell': "foobar"}
+        )
+
+
 def test_get_pixel_size_from_img():
     file_path = "test_files/16-11_Scan1.compressed.ome.tiff"
     with tif.TiffFile(file_path) as TF:
