@@ -155,13 +155,15 @@ def get_channel_metadata(data_dir: Path, channels_path: Path):
         for row in reader:
             if row[0].casefold() == "channel_id" or row[0].casefold() == "channel id":
                 print(channels_path, " has header row ", row, ". Please delete it and resubmit")
+                continue
             ch_id = row[0]
-            if row[1].casefold() == 'Yes'.casefold():
+            if row[1].casefold() == 'Yes'.casefold() or row[1].casefold() == 'TRUE'.casefold():
                 channel_metadata['nucleus'] = ch_id
             elif row[1].casefold() != 'No'.casefold():
                 print("Value should be 'Yes' or 'No' not, ", row[1])
-            if row[2].casefold() == 'Yes'.casefold():
+            if row[2].casefold() == 'Yes'.casefold() or row[2].casefold() == 'TRUE'.casefold():
                 channel_metadata['cell'] = ch_id
+    if channel_metadata
     return channel_metadata
 
 
