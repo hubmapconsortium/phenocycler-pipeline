@@ -4,7 +4,7 @@ label: Run Section Aligner to take out a single section of tissue and crop
 
 requirements:
   DockerRequirement:
-    dockerPull: hubmap/phenocycler-scripts:1.0.3
+    dockerPull: hubmap/phenocycler-scripts:latest
     dockerOutputDirectory: "/output"
 
 arguments:
