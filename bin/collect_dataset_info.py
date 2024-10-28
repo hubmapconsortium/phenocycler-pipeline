@@ -163,8 +163,10 @@ def get_channel_metadata(data_dir: Path, channels_path: Path):
                 print("Value should be 'Yes' or 'No' not, ", row[1])
             if row[2].casefold() == 'Yes'.casefold() or row[2].casefold() == 'TRUE'.casefold():
                 channel_metadata['cell'] = ch_id
-    if channel_metadata
-    return channel_metadata
+    if len(channel_metadata) > 0:
+        return channel_metadata
+    else:
+        return None
 
 
 def main(data_dir: Path, meta_path: Path, channels_path: Path, ome_tiff: Path):
