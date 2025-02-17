@@ -2,6 +2,9 @@
 class: Workflow
 cwlVersion: v1.1
 
+requirements:
+  ScatterFeatureRequirement: {}
+
 inputs:
   segmentation_method:
     type: string
@@ -64,12 +67,21 @@ steps:
       - segmentation_channels
     run: steps/prepare_segmentation_channels.cwl
 
+  run_slicing:
+    in:
+      segmentation_channels:
+        source: prepare_segmentation_channels/segmentation_channels
+    out:
+     - sliced_tiles
+   run: steps/slicing.cwl
+
   run_segmentation:
     in:
+      scatter: dataset_dir
       method:
         source: segmentation_method
       dataset_dir:
-        source: prepare_segmentation_channels/segmentation_channels
+        source: run_slicing/segmentation_channels
       gpus:
         source: gpus
     out:

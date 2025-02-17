@@ -1,5 +1,7 @@
 import argparse
 import re
+import os
+import shutil
 from pathlib import Path
 from typing import Dict, Tuple
 
@@ -18,6 +20,8 @@ def path_to_dict(path: Path):
     {R:region, X: position, Y: position, path: path}
     """
     value_list = re.split(r"(\d+)(?:_?)", path.name)[:-1]
+    if len(value_list) != 6:
+        return None
     d = dict(zip(*[iter(value_list)] * 2))
     d = {k: int(v) for k, v in d.items()}
     d.update({"path": path})
@@ -37,7 +41,7 @@ def get_image_path_in_dir(dir_path: Path) -> Path:
 
 
 def get_stitched_image_shape(
-    stitched_dirs: Dict[int, Dict[int, Dict[int, Path]]]
+        stitched_dirs: Dict[int, Dict[int, Dict[int, Path]]]
 ) -> Tuple[int, int]:
     stitched_img_path = None
     for cycle in stitched_dirs:
@@ -51,7 +55,7 @@ def get_stitched_image_shape(
 
 
 def create_output_dirs_for_tiles(
-    stitched_channel_dirs: Dict[int, Dict[int, Dict[int, Path]]], out_dir: Path
+        stitched_channel_dirs: Dict[int, Dict[int, Dict[int, Path]]], out_dir: Path
 ) -> Dict[int, Dict[int, Path]]:
     dir_naming_template = "Cyc{cycle:d}_reg{region:d}"
     out_dirs_for_tiles = dict()
@@ -66,10 +70,10 @@ def create_output_dirs_for_tiles(
 
 
 def split_channels_into_tiles(
-    stitched_dirs: Dict[int, Dict[int, Dict[int, Path]]],
-    out_dirs_for_tiles: Dict[int, Dict[int, Path]],
-    tile_size=1000,
-    overlap=50,
+        stitched_dirs: Dict[int, Dict[int, Dict[int, Path]]],
+        out_dirs_for_tiles: Dict[int, Dict[int, Path]],
+        tile_size=1000,
+        overlap=50,
 ):
     for cycle in stitched_dirs:
         for region in stitched_dirs[cycle]:
@@ -89,11 +93,26 @@ def split_channels_into_tiles(
 
 
 def organize_dirs(base_stitched_dir: Path) -> Dict[int, Dict[int, Dict[int, Path]]]:
-    stitched_channel_dirs = list(base_stitched_dir.iterdir())
     # expected dir naming Cyc{cyc:03d}_Reg{reg:03d}_Ch{ch:03d}
+    # New format is expecting a dir with aligned_tissue_0_cell.tiff, aligned_tissue_0_nucleus.tif
+
+    os.makedirs(os.path.join(base_stitched_dir / 'to_slice'), exist_ok=True)
+    os.makedirs(os.path.join(base_stitched_dir / 'to_slice/Cyc01_Reg01_Ch01'), exist_ok=True)
+    os.makedirs(os.path.join(base_stitched_dir.joinpath('to_slice/Cyc01_Reg01_Ch02')), exist_ok=True)
+
+    shutil.copy(base_stitched_dir / "aligned_tissue_0_cell.tif",
+                base_stitched_dir / "to_slice" / "Cyc01_Reg01_Ch01" / "Cyc01_Reg01_Ch01.ome.tiff")
+    shutil.copy(base_stitched_dir / "aligned_tissue_0_nucleus.tif",
+                base_stitched_dir / "to_slice" / "Cyc01_Reg01_Ch02" / "Cyc01_Reg01_Ch02.ome.tiff")
+
+    base_stitched_dir = base_stitched_dir / "to_slice"
+    stitched_channel_dirs = list(base_stitched_dir.iterdir())
+
     stitched_dirs = dict()
     for dir_path in stitched_channel_dirs:
         name_info = path_to_dict(dir_path)
+        if name_info is None:
+            continue
         cycle = name_info["Cyc"]
         region = name_info["Reg"]
         channel = name_info["Ch"]
@@ -108,9 +127,9 @@ def organize_dirs(base_stitched_dir: Path) -> Dict[int, Dict[int, Dict[int, Path
     return stitched_dirs
 
 
-def main(base_stitched_dir: Path, pipeline_config_path: Path):
-    out_dir = Path("/output/new_tiles")
-    pipeline_conf_dir = Path("/output/pipeline_conf/")
+def main(base_stitched_dir: Path, pipeline_config_path: Path, base_out_dir: Path ="/output"):
+    out_dir = Path("output/new_tiles")
+    pipeline_conf_dir = Path("output/pipeline_conf/")
     make_dir_if_not_exists(out_dir)
     make_dir_if_not_exists(pipeline_conf_dir)
 
@@ -119,7 +138,7 @@ def main(base_stitched_dir: Path, pipeline_config_path: Path):
 
     stitched_img_shape = get_stitched_image_shape(stitched_channel_dirs)
 
-    tile_size = 1000
+    tile_size = 10000
     overlap = 100
     print("Splitting images into tiles")
     print("Tile size:", tile_size, "| overlap:", overlap)
@@ -129,6 +148,7 @@ def main(base_stitched_dir: Path, pipeline_config_path: Path):
         pipeline_config_path, (tile_size, tile_size), overlap, stitched_img_shape
     )
     save_modified_pipeline_config(modified_experiment, pipeline_conf_dir)
+
 
 
 if __name__ == "__main__":

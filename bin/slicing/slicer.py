@@ -3,6 +3,7 @@ import os.path as osp
 import dask
 import numpy as np
 import tifffile as tif
+from tiling import SnakeTiling
 
 
 def get_tile(arr, hor_f: int, hor_t: int, ver_f: int, ver_t: int, overlap=0):
@@ -74,6 +75,9 @@ def split_by_size(
             tile = get_tile(arr, hor_f, hor_t, ver_f, ver_t, overlap)
 
             tiles.append(tile)
+            tiling = SnakeTiling()
+            co_ords = tiling.coordinates_from_index((i * x_ntiles+j+1), x_ntiles, y_ntiles)
+            print(co_ords, x_ntiles, y_ntiles, (i * x_ntiles) + (j + 1))
             name = "{region:d}_{tile:05d}_Z{zplane:03d}_CH{channel:d}.tif".format(
                 region=region, tile=(i * x_ntiles) + (j + 1), zplane=zplane, channel=channel
             )
