@@ -3,7 +3,7 @@ import os.path as osp
 import dask
 import numpy as np
 import tifffile as tif
-from tiling import SnakeTiling
+from tiling import SnakeTiling, GridTiling
 
 
 def get_tile(arr, hor_f: int, hor_t: int, ver_f: int, ver_t: int, overlap=0):
@@ -74,13 +74,19 @@ def split_by_size(
 
             tile = get_tile(arr, hor_f, hor_t, ver_f, ver_t, overlap)
 
+            # Need names like R0_X1_Y1_cell.tif R0_X1_Y1_nucleus.tif instead of the current names
+
             tiles.append(tile)
-            tiling = SnakeTiling()
-            co_ords = tiling.coordinates_from_index((i * x_ntiles+j+1), x_ntiles, y_ntiles)
-            print(co_ords, x_ntiles, y_ntiles, (i * x_ntiles) + (j + 1))
-            name = "{region:d}_{tile:05d}_Z{zplane:03d}_CH{channel:d}.tif".format(
-                region=region, tile=(i * x_ntiles) + (j + 1), zplane=zplane, channel=channel
-            )
+            tiling = GridTiling()
+            tile_num = (i * x_ntiles) + j
+            co_ords = tiling.coordinates_from_index(tile_num, x_ntiles, y_ntiles)
+            print(co_ords, x_ntiles, y_ntiles, tile_num)
+            cell_nuc = "nucleus" if channel == 1 else "cell"
+            name = "R{region:d}_X{x:d}_Y{y:d}_{cell_nuc}.tif".format(region=region, x=co_ords[0]+1, y=co_ords[1]+1, cell_nuc=cell_nuc)
+
+            # name = "{region:d}_{tile:05d}_Z{zplane:03d}_CH{channel:d}.tif".format(
+            #     region=region, tile=tile_num, zplane=zplane, channel=channel
+            # )
             img_names.append(name)
 
     return tiles, img_names
