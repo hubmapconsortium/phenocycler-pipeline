@@ -1,13 +1,13 @@
 import argparse
-import re
 import os
+import re
 import shutil
 from pathlib import Path
 from typing import Dict, Tuple
 
 import tifffile as tif
-from slicing.modify_pipeline_config import modify_pipeline_config, save_modified_pipeline_config
-from slicing.slicer import slice_img
+from modify_pipeline_config import modify_pipeline_config, save_modified_pipeline_config
+from slicer import slice_img
 
 
 def path_to_str(path: Path):
@@ -96,14 +96,20 @@ def organize_dirs(base_stitched_dir: Path) -> Dict[int, Dict[int, Dict[int, Path
     # expected dir naming Cyc{cyc:03d}_Reg{reg:03d}_Ch{ch:03d}
     # New format is expecting a dir with aligned_tissue_0_cell.tiff, aligned_tissue_0_nucleus.tif
 
-    os.makedirs(os.path.join(base_stitched_dir / 'to_slice'), exist_ok=True)
-    os.makedirs(os.path.join(base_stitched_dir / 'to_slice/Cyc01_Reg01_Ch01'), exist_ok=True)
-    os.makedirs(os.path.join(base_stitched_dir.joinpath('to_slice/Cyc01_Reg01_Ch02')), exist_ok=True)
+    os.makedirs(os.path.join(base_stitched_dir / "to_slice"), exist_ok=True)
+    os.makedirs(os.path.join(base_stitched_dir / "to_slice/Cyc01_Reg01_Ch01"), exist_ok=True)
+    os.makedirs(
+        os.path.join(base_stitched_dir.joinpath("to_slice/Cyc01_Reg01_Ch02")), exist_ok=True
+    )
 
-    shutil.copy(base_stitched_dir / "aligned_tissue_0_cell.tif",
-                base_stitched_dir / "to_slice" / "Cyc01_Reg01_Ch01" / "Cyc01_Reg01_Ch01.ome.tiff")
-    shutil.copy(base_stitched_dir / "aligned_tissue_0_nucleus.tif",
-                base_stitched_dir / "to_slice" / "Cyc01_Reg01_Ch02" / "Cyc01_Reg01_Ch02.ome.tiff")
+    shutil.copy(
+        base_stitched_dir / "aligned_tissue_0_cell.tif",
+        base_stitched_dir / "to_slice" / "Cyc01_Reg01_Ch01" / "Cyc01_Reg01_Ch01.ome.tiff",
+    )
+    shutil.copy(
+        base_stitched_dir / "aligned_tissue_0_nucleus.tif",
+        base_stitched_dir / "to_slice" / "Cyc01_Reg01_Ch02" / "Cyc01_Reg01_Ch02.ome.tiff",
+    )
 
     base_stitched_dir = base_stitched_dir / "to_slice"
     stitched_channel_dirs = list(base_stitched_dir.iterdir())
@@ -130,6 +136,7 @@ def organize_dirs(base_stitched_dir: Path) -> Dict[int, Dict[int, Dict[int, Path
 def main(base_stitched_dir: Path, base_out_dir: Path = "/output/"):
     out_dir = Path.joinpath(base_out_dir, Path("new_tiles"))
     pipeline_conf_dir = Path.joinpath(base_out_dir, Path("pipeline_conf/"))
+
     make_dir_if_not_exists(out_dir)
     make_dir_if_not_exists(pipeline_conf_dir)
 
