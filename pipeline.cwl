@@ -16,8 +16,6 @@ inputs:
     type: File?
   channels_path:
     type: File?
-  slicing_config:
-    type: File
 
 outputs:
   pipeline_output:
