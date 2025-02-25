@@ -6,6 +6,6 @@ base_stitched_dir = Path(os.path.normpath(os.path.join(os.path.dirname(__file__)
 pipeline_config_path = Path('test_files/slicing/slicing_config.json')
 
 def test_slicing_main():
-    main(base_stitched_dir, pipeline_config_path)
+    main(base_stitched_dir, base_out_dir=Path("output/"))
 
 

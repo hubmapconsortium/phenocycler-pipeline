@@ -127,9 +127,9 @@ def organize_dirs(base_stitched_dir: Path) -> Dict[int, Dict[int, Dict[int, Path
     return stitched_dirs
 
 
-def main(base_stitched_dir: Path, base_out_dir: Path ="/output"):
-    out_dir = Path("output/new_tiles")
-    pipeline_conf_dir = Path("output/pipeline_conf/")
+def main(base_stitched_dir: Path, base_out_dir: Path = "/output/"):
+    out_dir = Path.joinpath(base_out_dir, Path("new_tiles"))
+    pipeline_conf_dir = Path.joinpath(base_out_dir, Path("pipeline_conf/"))
     make_dir_if_not_exists(out_dir)
     make_dir_if_not_exists(pipeline_conf_dir)
 
@@ -145,10 +145,9 @@ def main(base_stitched_dir: Path, base_out_dir: Path ="/output"):
     split_channels_into_tiles(stitched_channel_dirs, out_dirs_for_tiles, tile_size, overlap)
 
     modified_experiment = modify_pipeline_config(
-      (tile_size, tile_size), overlap, stitched_img_shape
+        (tile_size, tile_size), overlap, stitched_img_shape
     )
     save_modified_pipeline_config(modified_experiment, pipeline_conf_dir)
-
 
 
 if __name__ == "__main__":
@@ -158,7 +157,6 @@ if __name__ == "__main__":
         type=Path,
         help="path to directory with directories per channel that contain stitched images",
     )
-
 
     args = parser.parse_args()
 
