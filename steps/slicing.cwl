@@ -4,7 +4,7 @@ class: CommandLineTool
 requirements:
   DockerRequirement:
     dockerPull: hubmap/phenocycler-scripts:latest
-    dockerOutputDirectory: "output"
+    dockerOutputDirectory: "/output"
 
 baseCommand: ["python", "/opt/slicing/run_slicing.py"]
 

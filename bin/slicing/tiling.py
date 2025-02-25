@@ -1,5 +1,4 @@
 class Tiling(object):
-
     def coordinates_from_index(self, index, w, h):
         """Get tile coordinates from index
 
@@ -11,9 +10,9 @@ class Tiling(object):
             x, y - 0-based grid coordinates
         """
         if w <= 0:
-            raise ValueError('Width must be >= 0')
+            raise ValueError("Width must be >= 0")
         if h <= 0:
-            raise ValueError('Height must be >= 0')
+            raise ValueError("Height must be >= 0")
         return self._coordinates_from_index(index, w, h)
 
     def index_from_coordinates(self, x, y, w, h):
@@ -28,9 +27,9 @@ class Tiling(object):
             x, y - 0-based grid coordinates
         """
         if w <= 0:
-            raise ValueError('Width must be >= 0')
+            raise ValueError("Width must be >= 0")
         if h <= 0:
-            raise ValueError('Height must be >= 0')
+            raise ValueError("Height must be >= 0")
         return self._index_from_coordinates(x, y, w, h)
 
     def _coordinates_from_index(self, index, w, h):
@@ -51,6 +50,7 @@ class Tiling(object):
             Array where index in array corresponds to smaller grid index and value to index in larger grid (all 0-based)
         """
         import numpy as np
+
         n = tgt_dims[0] * tgt_dims[1]
         remap = []
         for i in range(n):
@@ -61,9 +61,12 @@ class Tiling(object):
             src_p = (origin[0] + tgt_p[0], origin[1] + tgt_p[1])
 
             # Map target grid index to index on original grid
-            src_i = self.index_from_coordinates(x=src_p[0], y=src_p[1], w=src_dims[0], h=src_dims[1])
+            src_i = self.index_from_coordinates(
+                x=src_p[0], y=src_p[1], w=src_dims[0], h=src_dims[1]
+            )
             remap.append(src_i)
         return np.array(remap)
+
 
 class SnakeTiling(Tiling):
     """Snake tiling implies movements as left-to-right, down and then right-to-left, down, repeat"""
@@ -94,10 +97,8 @@ class GridTiling(Tiling):
         return y * w + x
 
 
-TILINGS = {
-    'snake': SnakeTiling(),
-    'grid': GridTiling()
-}
+TILINGS = {"snake": SnakeTiling(), "grid": GridTiling()}
+
 
 def get_tiling_by_name(name):
     if name not in TILINGS:
