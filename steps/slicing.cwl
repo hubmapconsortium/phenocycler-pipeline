@@ -24,7 +24,7 @@ outputs:
   sliced_tiles:
     type: Directory[]
     outputBinding:
-      glob: "output/new_tiles"
+      glob: "output/new_tiles/R*"
 
   modified_pipeline_config:
     type: File
