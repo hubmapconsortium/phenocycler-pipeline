@@ -3,10 +3,10 @@ class: CommandLineTool
 
 requirements:
   DockerRequirement:
-    dockerPull: hubmap/segmentations:1.3.1
+    dockerPull: hubmap/phenocycler-scripts:latest
     dockerOutputDirectory: /output
 
-baseCommand: ["python", "/opt/codex_stitching/secondary_stitcher/secondary_stitcher_runner.py"]
+baseCommand: ["python", "/opt/secondary_stitcher/secondary_stitcher_runner.py"]
 
 
 inputs:
@@ -16,9 +16,11 @@ inputs:
       prefix: "--pipeline_config_path"
 
   ometiff_dir:
-    type: Directory[]
-    inputBinding:
-      prefix: "--ometiff_dir"
+    type:
+      - type: array
+        items: Directory
+        inputBinding:
+          prefix: "--ometiff_dir"
 
 outputs:
   stitched_images:

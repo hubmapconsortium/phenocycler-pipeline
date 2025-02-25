@@ -1,12 +1,11 @@
 import argparse
-import os
+import json
 import re
-import shutil
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Tuple
 
 import tifffile as tif
-from modify_pipeline_config import modify_pipeline_config, save_modified_pipeline_config
+from modify_pipeline_config import modify_pipeline_config
 from slicer import slice_img
 
 filename_pattern = re.compile(r"^aligned_tissue_0_(?P<channel>\w+).tif$")
@@ -66,7 +65,7 @@ def split_channels_into_tiles(
 
 def main(segmentation_channels_dir: Path, pipeline_config_path: Path):
     out_dir = Path("output/new_tiles")
-    pipeline_conf_dir = Path("output/pipeline_conf/")
+    pipeline_conf_dir = Path("output/pipeline_conf")
     out_dir.mkdir(exist_ok=True, parents=True)
     pipeline_conf_dir.mkdir(exist_ok=True, parents=True)
 
@@ -81,7 +80,9 @@ def main(segmentation_channels_dir: Path, pipeline_config_path: Path):
     modified_experiment = modify_pipeline_config(
         pipeline_config_path, (tile_size, tile_size), overlap, stitched_img_shape
     )
-    save_modified_pipeline_config(modified_experiment, pipeline_conf_dir)
+    with open((p := "pipelineConfig.json"), "w") as f:
+        print("Saving modified pipeline config to", p)
+        json.dump(modified_experiment, f, indent=4)
 
 
 if __name__ == "__main__":

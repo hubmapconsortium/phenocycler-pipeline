@@ -2,6 +2,8 @@ import json
 from pathlib import Path
 from typing import Tuple
 
+import yaml
+
 
 def generate_slicer_info(
     tile_shape_no_overlap: Tuple[int, int], overlap: int, stitched_img_shape: Tuple[int, int]
@@ -42,20 +44,7 @@ def generate_slicer_info(
     return slicer_info
 
 
-def replace_values_in_config(exp, slicer_info):
-    original_measurements = {
-        "original_measurements": {
-            "tiling_mode": exp["tiling_mode"],
-            "region_width": exp["region_width"],
-            "region_height": exp["region_height"],
-            "num_z_planes": exp["num_z_planes"],
-            "tile_width": exp["tile_width"],
-            "tile_height": exp["tile_height"],
-            "tile_overlap_x": exp["tile_overlap_x"],
-            "tile_overlap_y": exp["tile_overlap_y"],
-            "target_shape": exp["target_shape"],
-        }
-    }
+def add_slicer_config(exp, slicer_info):
     values_to_replace = {
         "tiling_mode": "grid",
         "region_width": slicer_info["slicer"]["num_tiles"]["x"],
@@ -72,7 +61,6 @@ def replace_values_in_config(exp, slicer_info):
     }
 
     exp.update(values_to_replace)
-    exp.update(original_measurements)
     return exp
 
 
@@ -83,16 +71,10 @@ def modify_pipeline_config(
     stitched_img_shape: Tuple[int, int],
 ):
     with open(path_to_config, "r") as s:
-        config = json.load(s)
+        config = yaml.safe_load(s)
 
     slicer_info = generate_slicer_info(tile_shape_no_overlap, overlap, stitched_img_shape)
-    config = replace_values_in_config(config, slicer_info)
+    config = add_slicer_config(config, slicer_info)
     config.update(slicer_info)
 
     return config
-
-
-def save_modified_pipeline_config(pipeline_config: dict, out_dir: Path):
-    out_file_path = out_dir.joinpath("pipelineConfig.json")
-    with open(out_file_path, "w") as s:
-        json.dump(pipeline_config, s, indent=4)

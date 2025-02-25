@@ -97,7 +97,7 @@ if __name__ == "__main__":
         "--ometiff_dir",
         type=Path,
         help="dir with segmentation mask tiles and codex image tiles",
-        nargs="+",
+        action="append",
     )
 
     args = parser.parse_args()
