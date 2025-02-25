@@ -10,10 +10,10 @@ baseCommand: ["python", "/opt/slicing/run_slicing.py"]
 
 
 inputs:
-  base_stitched_dir:
+  segmentation_channels_dir:
     type: Directory
     inputBinding:
-      prefix: "--base_stitched_dir"
+      prefix: "--segmentation_channels_dir"
 
   pipeline_config:
     type: File

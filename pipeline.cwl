@@ -16,8 +16,6 @@ inputs:
     type: File?
   channels_path:
     type: File?
-  slicing_config:
-    type: File
 
 outputs:
   pipeline_output:
@@ -71,10 +69,10 @@ steps:
 
   run_slicing:
     in:
-      base_stitched_dir:
+      segmentation_channels_dir:
         source: prepare_segmentation_channels/segmentation_channels
       pipeline_config:
-        source: slicing_config
+        source: collect_dataset_info/pipeline_config
     out:
       - sliced_tiles
       - modified_pipeline_config
