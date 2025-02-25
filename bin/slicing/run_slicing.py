@@ -1,9 +1,8 @@
 import argparse
-import os
+import json
 import re
-import shutil
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Tuple
 
 import tifffile as tif
 from modify_pipeline_config import modify_pipeline_config, save_modified_pipeline_config
@@ -81,7 +80,9 @@ def main(segmentation_channels_dir: Path, pipeline_config_path: Path):
     modified_experiment = modify_pipeline_config(
         pipeline_config_path, (tile_size, tile_size), overlap, stitched_img_shape
     )
-    save_modified_pipeline_config(modified_experiment, pipeline_conf_dir)
+    with open(p := (pipeline_conf_dir / "pipelineConfig.json"), "w") as f:
+        print("Saving modified pipeline config to", p)
+        json.dump(modified_experiment, f, indent=4)
 
 
 if __name__ == "__main__":
