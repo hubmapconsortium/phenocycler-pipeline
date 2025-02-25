@@ -3,7 +3,7 @@ class: Workflow
 cwlVersion: v1.1
 
 requirements:
-  ScatterFeatureRequirement: {}
+- class: ScatterFeatureRequirement
 
 inputs:
   segmentation_method:
@@ -81,7 +81,7 @@ steps:
       method:
         source: segmentation_method
       dataset_dir:
-        source: run_slicing/segmentation_channels
+        source: run_slicing/sliced_tiles
       gpus:
         source: gpus
     out:

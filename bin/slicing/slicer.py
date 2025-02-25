@@ -1,3 +1,4 @@
+import os
 import os.path as osp
 
 import dask
@@ -82,7 +83,8 @@ def split_by_size(
             co_ords = tiling.coordinates_from_index(tile_num, x_ntiles, y_ntiles)
             print(co_ords, x_ntiles, y_ntiles, tile_num)
             cell_nuc = "nucleus" if channel == 1 else "cell"
-            name = "R{region:d}_X{x:d}_Y{y:d}_{cell_nuc}.tif".format(region=region, x=co_ords[0]+1, y=co_ords[1]+1,
+            folder_name = "R{region:d}_X{x:d}_Y{y:d}".format(region=region, x=co_ords[0]+1, y=co_ords[1]+1,)
+            name = folder_name +"/R{region:d}_X{x:d}_Y{y:d}_{cell_nuc}.tif".format(region=region, x=co_ords[0]+1, y=co_ords[1]+1,
                                                                      cell_nuc=cell_nuc)
 
             # name = "{region:d}_{tile:05d}_Z{zplane:03d}_CH{channel:d}.tif".format(
@@ -114,6 +116,8 @@ def slice_img(
 
     task = []
     for i, img in enumerate(this_plane_tiles):
+        base = osp.join(out_dir, this_plane_img_names[i])
+        os.makedirs(osp.dirname(base),exist_ok=True)
         task.append(
             dask.delayed(tif.imwrite)(
                 osp.join(out_dir, this_plane_img_names[i]), img, photometric="minisblack"

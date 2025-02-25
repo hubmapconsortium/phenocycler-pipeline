@@ -21,10 +21,10 @@ inputs:
       prefix: "--pipeline_config_path"
 
 outputs:
-  new_tiles:
-    type: Directory
+  sliced_tiles:
+    type: Directory[]
     outputBinding:
-      glob: "/output/new_tiles"
+      glob: "/output/new_tiles/Cyc1_reg1/"
 
   modified_pipeline_config:
     type: File
