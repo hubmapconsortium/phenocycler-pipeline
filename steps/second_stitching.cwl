@@ -16,7 +16,7 @@ inputs:
       prefix: "--pipeline_config_path"
 
   ometiff_dir:
-    type: Directory
+    type: Directory[]
     inputBinding:
       prefix: "--ometiff_dir"
 

@@ -71,19 +71,20 @@ steps:
 
   run_slicing:
     in:
-      segmentation_channels:
+      base_stitched_dir:
         source: prepare_segmentation_channels/segmentation_channels
       pipeline_config:
         source: slicing_config
     out:
-     - sliced_tiles
-   run: steps/slicing.cwl
+      - sliced_tiles
+      - modified_pipeline_config
+    run: steps/slicing.cwl
 
   run_segmentation:
+    scatter: dataset_dir
     in:
-      scatter: dataset_dir
       method:
-        source: segmentation_method
+          source: segmentation_method
       dataset_dir:
         source: run_slicing/sliced_tiles
       gpus:
@@ -92,12 +93,23 @@ steps:
       - mask_dir
     run: steps/run_segmentation.cwl
 
+  stitch_output:
+    in:
+      ometiff_dir:
+        source: run_segmentation/mask_dir
+      pipeline_config:
+        source: run_slicing/modified_pipeline_config
+    out:
+      - stitched_images
+      - final_pipeline_config
+    run: steps/second_stitching.cwl
+
   collect_output:
     in:
       data_dir:
         source: data_dir
       mask_dir:
-        source: run_segmentation/mask_dir
+        source: stitch_output/stitched_images
       pipeline_config:
         source: collect_dataset_info/pipeline_config
       ome_tiff:
