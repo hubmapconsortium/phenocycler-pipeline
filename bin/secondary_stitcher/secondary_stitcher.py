@@ -1,7 +1,8 @@
 import re
 import xml.etree.ElementTree as ET
+from itertools import chain
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Dict, Iterable, List, Union
 
 import numpy as np
 import pandas as pd
@@ -65,9 +66,9 @@ def alpha_num_order(string: str) -> str:
     )
 
 
-def get_img_listing(in_dir: Path) -> List[Path]:
+def get_img_listing(in_dirs: Iterable[Path]) -> List[Path]:
     allowed_extensions = (".tif", ".tiff")
-    listing = list(in_dir.iterdir())
+    listing = list(chain.from_iterable(in_dir.iterdir() for in_dir in in_dirs))
     img_listing = [f for f in listing if f.suffix in allowed_extensions]
     img_listing = sorted(img_listing, key=lambda x: alpha_num_order(x.name))
     return img_listing
@@ -124,8 +125,8 @@ def get_slices(
     return big_image_slice, tile_slice
 
 
-def get_dataset_info(img_dir: Path):
-    img_paths = get_img_listing(img_dir)
+def get_dataset_info(img_dirs: Iterable[Path]):
+    img_paths = get_img_listing(img_dirs)
     positions = [path_to_dict(p) for p in img_paths]
     df = pd.DataFrame(positions)
     df.sort_values(["R", "Y", "X"], inplace=True)
@@ -230,7 +231,7 @@ def stitch_plane(
 
 
 def main(
-    img_dir: Path,
+    img_dirs: Iterable[Path],
     out_dir: Path,
     img_name_template: str,
     overlap: int,
@@ -247,7 +248,7 @@ def main(
         "bottom": padding_int[3],
     }
 
-    path_list_per_region, y_ntiles, x_ntiles = get_dataset_info(img_dir)
+    path_list_per_region, y_ntiles, x_ntiles = get_dataset_info(img_dirs)
 
     with tif.TiffFile(path_to_str(path_list_per_region[0][0])) as TF:
         tile_shape = list(TF.series[0].shape)
