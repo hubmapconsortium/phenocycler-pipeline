@@ -65,7 +65,7 @@ def split_channels_into_tiles(
 
 def main(segmentation_channels_dir: Path, pipeline_config_path: Path):
     out_dir = Path("output/new_tiles")
-    pipeline_conf_dir = Path("output/pipeline_conf/")
+    pipeline_conf_dir = Path("output/pipeline_conf")
     out_dir.mkdir(exist_ok=True, parents=True)
     pipeline_conf_dir.mkdir(exist_ok=True, parents=True)
 
@@ -80,7 +80,7 @@ def main(segmentation_channels_dir: Path, pipeline_config_path: Path):
     modified_experiment = modify_pipeline_config(
         pipeline_config_path, (tile_size, tile_size), overlap, stitched_img_shape
     )
-    with open(p := (pipeline_conf_dir / "pipelineConfig.json"), "w") as f:
+    with open((p := "pipelineConfig.json"), "w") as f:
         print("Saving modified pipeline config to", p)
         json.dump(modified_experiment, f, indent=4)
 
