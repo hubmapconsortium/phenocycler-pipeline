@@ -1,10 +1,11 @@
 import os
 import os.path as osp
+from pathlib import Path
 
 import dask
 import numpy as np
 import tifffile as tif
-from tiling import SnakeTiling, GridTiling
+from tiling import GridTiling, SnakeTiling
 
 
 def get_tile(arr, hor_f: int, hor_t: int, ver_f: int, ver_t: int, overlap=0):
@@ -45,12 +46,17 @@ def get_tile(arr, hor_f: int, hor_t: int, ver_f: int, ver_t: int, overlap=0):
 
 
 def split_by_size(
-    arr: np.ndarray, region: int, zplane: int, channel: int, tile_w: int, tile_h: int, overlap: int
-):
+    arr: np.ndarray,
+    channel_name: str,
+    tile_w: int,
+    tile_h: int,
+    overlap: int,
+) -> tuple[list[np.ndarray], list[Path]]:
     """Splits image into tiles by size of tile.
     tile_w - tile width
     tile_h - tile height
     """
+    region = 1
     x_axis = -1
     y_axis = -2
     arr_width, arr_height = arr.shape[x_axis], arr.shape[y_axis]
@@ -82,10 +88,10 @@ def split_by_size(
             tile_num = (i * x_ntiles) + j
             co_ords = tiling.coordinates_from_index(tile_num, x_ntiles, y_ntiles)
             print(co_ords, x_ntiles, y_ntiles, tile_num)
-            cell_nuc = "nucleus" if channel == 1 else "cell"
-            folder_name = "R{region:d}_X{x:d}_Y{y:d}".format(region=region, x=co_ords[0]+1, y=co_ords[1]+1,)
-            name = folder_name +"/R{region:d}_X{x:d}_Y{y:d}_{cell_nuc}.tif".format(region=region, x=co_ords[0]+1, y=co_ords[1]+1,
-                                                                     cell_nuc=cell_nuc)
+            folder = Path(f"R{region:d}_X{co_ords[0] + 1:d}_Y{co_ords[1] + 1:d}")
+            name = (
+                folder / f"R{region:d}_X{co_ords[0] + 1:d}_Y{co_ords[1] + 1:d}_{channel_name}.tif"
+            )
 
             # name = "{region:d}_{tile:05d}_Z{zplane:03d}_CH{channel:d}.tif".format(
             #     region=region, tile=tile_num, zplane=zplane, channel=channel
@@ -96,19 +102,16 @@ def split_by_size(
 
 
 def slice_img(
-    in_path: str,
-    out_dir: str,
+    in_path: Path,
+    out_dir: Path,
     tile_size: int,
     overlap: int,
-    region: int,
-    channel: int,
     zplane: int,
+    channel_name: str,
 ):
     this_plane_tiles, this_plane_img_names = split_by_size(
         tif.imread(in_path),
-        region=region,
-        zplane=zplane,
-        channel=channel,
+        channel_name=channel_name,
         tile_w=tile_size,
         tile_h=tile_size,
         overlap=overlap,
@@ -116,8 +119,8 @@ def slice_img(
 
     task = []
     for i, img in enumerate(this_plane_tiles):
-        base = osp.join(out_dir, this_plane_img_names[i])
-        os.makedirs(osp.dirname(base),exist_ok=True)
+        base = out_dir / this_plane_img_names[i]
+        base.parent.mkdir(exist_ok=True, parents=True)
         task.append(
             dask.delayed(tif.imwrite)(
                 osp.join(out_dir, this_plane_img_names[i]), img, photometric="minisblack"

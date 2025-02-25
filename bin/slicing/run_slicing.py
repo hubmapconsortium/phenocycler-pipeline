@@ -9,6 +9,8 @@ import tifffile as tif
 from modify_pipeline_config import modify_pipeline_config, save_modified_pipeline_config
 from slicer import slice_img
 
+filename_pattern = re.compile(r"^aligned_tissue_0_(?P<channel>\w+).tif$")
+
 
 def path_to_str(path: Path):
     return str(path.absolute().as_posix())
@@ -28,11 +30,6 @@ def path_to_dict(path: Path):
     return d
 
 
-def make_dir_if_not_exists(dir_path: Path):
-    if not dir_path.exists():
-        dir_path.mkdir(parents=True)
-
-
 def get_image_path_in_dir(dir_path: Path) -> Path:
     allowed_extensions = (".tif", ".tiff")
     listing = list(dir_path.iterdir())
@@ -40,115 +37,46 @@ def get_image_path_in_dir(dir_path: Path) -> Path:
     return img_listing[0]
 
 
-def get_stitched_image_shape(
-    stitched_dirs: Dict[int, Dict[int, Dict[int, Path]]]
-) -> Tuple[int, int]:
-    stitched_img_path = None
-    for cycle in stitched_dirs:
-        for region in stitched_dirs[cycle]:
-            for channel, dir_path in stitched_dirs[cycle][region].items():
-                stitched_img_path = get_image_path_in_dir(dir_path)
-                break
+def get_stitched_image_shape(directory: Path) -> Tuple[int, int]:
+    stitched_img_path = get_image_path_in_dir(directory)
     with tif.TiffFile(stitched_img_path) as TF:
         stitched_image_shape = TF.series[0].shape
     return stitched_image_shape
 
 
-def create_output_dirs_for_tiles(
-    stitched_channel_dirs: Dict[int, Dict[int, Dict[int, Path]]], out_dir: Path
-) -> Dict[int, Dict[int, Path]]:
-    dir_naming_template = "Cyc{cycle:d}_reg{region:d}"
-    out_dirs_for_tiles = dict()
-    for cycle in stitched_channel_dirs:
-        out_dirs_for_tiles[cycle] = {}
-        for region in stitched_channel_dirs[cycle]:
-            out_dir_name = dir_naming_template.format(cycle=cycle, region=region)
-            out_dir_path = out_dir / out_dir_name
-            make_dir_if_not_exists(out_dir_path)
-            out_dirs_for_tiles[cycle][region] = out_dir_path
-    return out_dirs_for_tiles
-
-
 def split_channels_into_tiles(
-    stitched_dirs: Dict[int, Dict[int, Dict[int, Path]]],
-    out_dirs_for_tiles: Dict[int, Dict[int, Path]],
+    input_dir: Path,
+    output_dir: Path,
     tile_size=1000,
     overlap=50,
 ):
-    for cycle in stitched_dirs:
-        for region in stitched_dirs[cycle]:
-            for channel, dir_path in stitched_dirs[cycle][region].items():
-                stitched_image_path = get_image_path_in_dir(dir_path)
-                print(stitched_image_path.name)
-                out_dir = out_dirs_for_tiles[cycle][region]
-                slice_img(
-                    path_to_str(stitched_image_path),
-                    path_to_str(out_dir),
-                    tile_size=tile_size,
-                    overlap=overlap,
-                    region=region,
-                    zplane=1,
-                    channel=channel,
-                )
+    for file_path in input_dir.iterdir():
+        if m := filename_pattern.match(file_path.name):
+            channel_name = m.group("channel")
+
+            slice_img(
+                file_path,
+                output_dir,
+                tile_size=tile_size,
+                overlap=overlap,
+                zplane=1,
+                channel_name=channel_name,
+            )
 
 
-def organize_dirs(base_stitched_dir: Path) -> Dict[int, Dict[int, Dict[int, Path]]]:
-    # expected dir naming Cyc{cyc:03d}_Reg{reg:03d}_Ch{ch:03d}
-    # New format is expecting a dir with aligned_tissue_0_cell.tiff, aligned_tissue_0_nucleus.tif
-
-    os.makedirs(os.path.join(base_stitched_dir / "to_slice"), exist_ok=True)
-    os.makedirs(os.path.join(base_stitched_dir / "to_slice/Cyc01_Reg01_Ch01"), exist_ok=True)
-    os.makedirs(
-        os.path.join(base_stitched_dir.joinpath("to_slice/Cyc01_Reg01_Ch02")), exist_ok=True
-    )
-
-    shutil.copy(
-        base_stitched_dir / "aligned_tissue_0_cell.tif",
-        base_stitched_dir / "to_slice" / "Cyc01_Reg01_Ch01" / "Cyc01_Reg01_Ch01.ome.tiff",
-    )
-    shutil.copy(
-        base_stitched_dir / "aligned_tissue_0_nucleus.tif",
-        base_stitched_dir / "to_slice" / "Cyc01_Reg01_Ch02" / "Cyc01_Reg01_Ch02.ome.tiff",
-    )
-
-    base_stitched_dir = base_stitched_dir / "to_slice"
-    stitched_channel_dirs = list(base_stitched_dir.iterdir())
-
-    stitched_dirs = dict()
-    for dir_path in stitched_channel_dirs:
-        name_info = path_to_dict(dir_path)
-        if name_info is None:
-            continue
-        cycle = name_info["Cyc"]
-        region = name_info["Reg"]
-        channel = name_info["Ch"]
-
-        if cycle in stitched_dirs:
-            if region in stitched_dirs[cycle]:
-                stitched_dirs[cycle][region][channel] = dir_path
-            else:
-                stitched_dirs[cycle][region] = {channel: dir_path}
-        else:
-            stitched_dirs[cycle] = {region: {channel: dir_path}}
-    return stitched_dirs
-
-
-def main(base_stitched_dir: Path, pipeline_config_path: Path, base_out_dir: Path = "/output"):
+def main(segmentation_channels_dir: Path, pipeline_config_path: Path):
     out_dir = Path("output/new_tiles")
     pipeline_conf_dir = Path("output/pipeline_conf/")
-    make_dir_if_not_exists(out_dir)
-    make_dir_if_not_exists(pipeline_conf_dir)
+    out_dir.mkdir(exist_ok=True, parents=True)
+    pipeline_conf_dir.mkdir(exist_ok=True, parents=True)
 
-    stitched_channel_dirs = organize_dirs(base_stitched_dir)
-    out_dirs_for_tiles = create_output_dirs_for_tiles(stitched_channel_dirs, out_dir)
-
-    stitched_img_shape = get_stitched_image_shape(stitched_channel_dirs)
+    stitched_img_shape = get_stitched_image_shape(segmentation_channels_dir)
 
     tile_size = 10000
     overlap = 100
     print("Splitting images into tiles")
     print("Tile size:", tile_size, "| overlap:", overlap)
-    split_channels_into_tiles(stitched_channel_dirs, out_dirs_for_tiles, tile_size, overlap)
+    split_channels_into_tiles(segmentation_channels_dir, out_dir, tile_size, overlap)
 
     modified_experiment = modify_pipeline_config(
         pipeline_config_path, (tile_size, tile_size), overlap, stitched_img_shape
@@ -159,14 +87,16 @@ def main(base_stitched_dir: Path, pipeline_config_path: Path, base_out_dir: Path
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--base_stitched_dir",
+        "--segmentation_channels_dir",
         type=Path,
-        help="path to directory with directories per channel that contain stitched images",
+        help="path to directory with one image per segmentation channel",
     )
     parser.add_argument(
-        "--pipeline_config_path", type=Path, help="path to pipelineConfig.json file"
+        "--pipeline_config_path",
+        type=Path,
+        help="path to pipelineConfig.json file",
     )
 
     args = parser.parse_args()
 
-    main(args.base_stitched_dir, args.pipeline_config_path)
+    main(args.segmentation_channels_dir, args.pipeline_config_path)
