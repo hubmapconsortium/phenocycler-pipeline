@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import Dict, Tuple
 
 import tifffile as tif
-from .modify_pipeline_config import modify_pipeline_config, save_modified_pipeline_config
-from .slicer import slice_img
+from slicing.modify_pipeline_config import modify_pipeline_config, save_modified_pipeline_config
+from slicing.slicer import slice_img
 
 
 def path_to_str(path: Path):
