@@ -10,18 +10,18 @@ baseCommand: ["python", "/opt/slicing/run_slicing.py"]
 
 
 inputs:
-  base_stitched_dir:
+  segmentation_channels_dir:
     type: Directory
     inputBinding:
-      prefix: "--base_stitched_dir"
+      prefix: "--segmentation_channels_dir"
 
 outputs:
   sliced_tiles:
     type: Directory[]
     outputBinding:
-      glob: "/output/new_tiles/Cyc1_reg1/"
+      glob: "output/new_tiles/R*"
 
   modified_pipeline_config:
     type: File
     outputBinding:
-      glob: "/output/pipeline_conf/pipelineConfig.json"
+      glob: "pipelineConfig.json"

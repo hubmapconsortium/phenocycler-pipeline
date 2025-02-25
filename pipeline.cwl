@@ -69,8 +69,9 @@ steps:
 
   run_slicing:
     in:
-      base_stitched_dir:
+      segmentation_channels_dir:
         source: prepare_segmentation_channels/segmentation_channels
+
     out:
       - sliced_tiles
       - modified_pipeline_config
