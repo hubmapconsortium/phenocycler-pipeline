@@ -1,13 +1,13 @@
 import argparse
-import re
 import os
+import re
 import shutil
 from pathlib import Path
 from typing import Dict, Tuple
 
 import tifffile as tif
-from slicing.modify_pipeline_config import modify_pipeline_config, save_modified_pipeline_config
-from slicing.slicer import slice_img
+from modify_pipeline_config import modify_pipeline_config, save_modified_pipeline_config
+from slicer import slice_img
 
 
 def path_to_str(path: Path):
@@ -41,7 +41,7 @@ def get_image_path_in_dir(dir_path: Path) -> Path:
 
 
 def get_stitched_image_shape(
-        stitched_dirs: Dict[int, Dict[int, Dict[int, Path]]]
+    stitched_dirs: Dict[int, Dict[int, Dict[int, Path]]]
 ) -> Tuple[int, int]:
     stitched_img_path = None
     for cycle in stitched_dirs:
@@ -55,7 +55,7 @@ def get_stitched_image_shape(
 
 
 def create_output_dirs_for_tiles(
-        stitched_channel_dirs: Dict[int, Dict[int, Dict[int, Path]]], out_dir: Path
+    stitched_channel_dirs: Dict[int, Dict[int, Dict[int, Path]]], out_dir: Path
 ) -> Dict[int, Dict[int, Path]]:
     dir_naming_template = "Cyc{cycle:d}_reg{region:d}"
     out_dirs_for_tiles = dict()
@@ -70,10 +70,10 @@ def create_output_dirs_for_tiles(
 
 
 def split_channels_into_tiles(
-        stitched_dirs: Dict[int, Dict[int, Dict[int, Path]]],
-        out_dirs_for_tiles: Dict[int, Dict[int, Path]],
-        tile_size=1000,
-        overlap=50,
+    stitched_dirs: Dict[int, Dict[int, Dict[int, Path]]],
+    out_dirs_for_tiles: Dict[int, Dict[int, Path]],
+    tile_size=1000,
+    overlap=50,
 ):
     for cycle in stitched_dirs:
         for region in stitched_dirs[cycle]:
@@ -96,14 +96,20 @@ def organize_dirs(base_stitched_dir: Path) -> Dict[int, Dict[int, Dict[int, Path
     # expected dir naming Cyc{cyc:03d}_Reg{reg:03d}_Ch{ch:03d}
     # New format is expecting a dir with aligned_tissue_0_cell.tiff, aligned_tissue_0_nucleus.tif
 
-    os.makedirs(os.path.join(base_stitched_dir / 'to_slice'), exist_ok=True)
-    os.makedirs(os.path.join(base_stitched_dir / 'to_slice/Cyc01_Reg01_Ch01'), exist_ok=True)
-    os.makedirs(os.path.join(base_stitched_dir.joinpath('to_slice/Cyc01_Reg01_Ch02')), exist_ok=True)
+    os.makedirs(os.path.join(base_stitched_dir / "to_slice"), exist_ok=True)
+    os.makedirs(os.path.join(base_stitched_dir / "to_slice/Cyc01_Reg01_Ch01"), exist_ok=True)
+    os.makedirs(
+        os.path.join(base_stitched_dir.joinpath("to_slice/Cyc01_Reg01_Ch02")), exist_ok=True
+    )
 
-    shutil.copy(base_stitched_dir / "aligned_tissue_0_cell.tif",
-                base_stitched_dir / "to_slice" / "Cyc01_Reg01_Ch01" / "Cyc01_Reg01_Ch01.ome.tiff")
-    shutil.copy(base_stitched_dir / "aligned_tissue_0_nucleus.tif",
-                base_stitched_dir / "to_slice" / "Cyc01_Reg01_Ch02" / "Cyc01_Reg01_Ch02.ome.tiff")
+    shutil.copy(
+        base_stitched_dir / "aligned_tissue_0_cell.tif",
+        base_stitched_dir / "to_slice" / "Cyc01_Reg01_Ch01" / "Cyc01_Reg01_Ch01.ome.tiff",
+    )
+    shutil.copy(
+        base_stitched_dir / "aligned_tissue_0_nucleus.tif",
+        base_stitched_dir / "to_slice" / "Cyc01_Reg01_Ch02" / "Cyc01_Reg01_Ch02.ome.tiff",
+    )
 
     base_stitched_dir = base_stitched_dir / "to_slice"
     stitched_channel_dirs = list(base_stitched_dir.iterdir())
@@ -127,7 +133,7 @@ def organize_dirs(base_stitched_dir: Path) -> Dict[int, Dict[int, Dict[int, Path
     return stitched_dirs
 
 
-def main(base_stitched_dir: Path, pipeline_config_path: Path, base_out_dir: Path ="/output"):
+def main(base_stitched_dir: Path, pipeline_config_path: Path, base_out_dir: Path = "/output"):
     out_dir = Path("output/new_tiles")
     pipeline_conf_dir = Path("output/pipeline_conf/")
     make_dir_if_not_exists(out_dir)
@@ -148,7 +154,6 @@ def main(base_stitched_dir: Path, pipeline_config_path: Path, base_out_dir: Path
         pipeline_config_path, (tile_size, tile_size), overlap, stitched_img_shape
     )
     save_modified_pipeline_config(modified_experiment, pipeline_conf_dir)
-
 
 
 if __name__ == "__main__":
