@@ -16,6 +16,8 @@ inputs:
     type: File?
   channels_path:
     type: File?
+  slicing_config:
+    type: File
 
 outputs:
   pipeline_output:
@@ -71,6 +73,8 @@ steps:
     in:
       segmentation_channels:
         source: prepare_segmentation_channels/segmentation_channels
+      pipeline_config:
+        source: slicing_config
     out:
      - sliced_tiles
    run: steps/slicing.cwl
