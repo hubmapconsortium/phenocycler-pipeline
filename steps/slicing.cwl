@@ -24,9 +24,9 @@ outputs:
   sliced_tiles:
     type: Directory[]
     outputBinding:
-      glob: "/output/new_tiles/Cyc1_reg1/"
+      glob: "output/new_tiles/Cyc1_reg1/"
 
   modified_pipeline_config:
     type: File
     outputBinding:
-      glob: "/output/pipeline_conf/pipelineConfig.json"
+      glob: "output/pipeline_conf/pipelineConfig.json"
