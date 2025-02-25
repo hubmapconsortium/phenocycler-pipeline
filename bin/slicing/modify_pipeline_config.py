@@ -77,16 +77,61 @@ def replace_values_in_config(exp, slicer_info):
 
 
 def modify_pipeline_config(
-    path_to_config: Path,
     tile_shape_no_overlap: Tuple[int, int],
     overlap: int,
     stitched_img_shape: Tuple[int, int],
 ):
-    with open(path_to_config, "r") as s:
-        config = json.load(s)
 
     slicer_info = generate_slicer_info(tile_shape_no_overlap, overlap, stitched_img_shape)
-    config = replace_values_in_config(config, slicer_info)
+    config = {
+    "tiling_mode": "grid",
+    "region_height": 5,
+    "region_width": 4,
+    "num_z_planes": 1,
+    "tile_overlap_x": 200,
+    "tile_overlap_y": 200,
+    "tile_height": 10000,
+    "tile_width": 10000,
+    "target_shape": [
+        10000,
+        10000
+    ],
+    "original_measurements": {
+        "tiling_mode": "grid",
+        "region_width": 11,
+        "region_height": 10,
+        "num_z_planes": 1,
+        "tile_width": 1000,
+        "tile_height": 1000,
+        "tile_overlap_x": 200,
+        "tile_overlap_y": 200,
+        "target_shape": [
+            1000,
+            1000
+        ]
+    },
+    "slicer": {
+        "padding": {
+            "left": 0,
+            "right": 4806,
+            "top": 0,
+            "bottom": 7166
+        },
+        "overlap": 100,
+        "num_tiles": {
+            "x": 4,
+            "y": 5
+        },
+        "tile_shape_no_overlap": {
+            "x": 10000,
+            "y": 10000
+        },
+        "tile_shape_with_overlap": {
+            "x": 10200,
+            "y": 10200
+        }
+    }
+}
     config.update(slicer_info)
 
     return config

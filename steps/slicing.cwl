@@ -15,11 +15,6 @@ inputs:
     inputBinding:
       prefix: "--base_stitched_dir"
 
-  pipeline_config:
-    type: File
-    inputBinding:
-      prefix: "--pipeline_config_path"
-
 outputs:
   sliced_tiles:
     type: Directory[]

@@ -73,8 +73,6 @@ steps:
     in:
       base_stitched_dir:
         source: prepare_segmentation_channels/segmentation_channels
-      pipeline_config:
-        source: slicing_config
     out:
       - sliced_tiles
       - modified_pipeline_config
