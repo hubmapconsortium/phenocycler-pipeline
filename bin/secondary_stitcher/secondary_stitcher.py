@@ -57,20 +57,18 @@ def add_structured_annotations(omexml_str: str, nucleus_channel: str, cell_chann
     return omexml_str_with_sa
 
 
-def alpha_num_order(string: str) -> str:
+def alpha_num_order_path(path: Path) -> str:
     """Returns all numbers on 5 digits to let sort the string with numeric order.
     Ex: alphaNumOrder("a6b12.125")  ==> "a00006b00012.00125"
     """
     return "".join(
-        [format(int(x), "05d") if x.isdigit() else x for x in re.split(r"(\d+)", string)]
+        format(int(x), "05d") if x.isdigit() else x for x in re.split(r"(\d+)", path.name)
     )
 
 
 def get_img_listing(in_dirs: Iterable[Path]) -> List[Path]:
-    allowed_extensions = (".tif", ".tiff")
-    listing = list(chain.from_iterable(in_dir.iterdir() for in_dir in in_dirs))
-    img_listing = [f for f in listing if f.suffix in allowed_extensions]
-    img_listing = sorted(img_listing, key=lambda x: alpha_num_order(x.name))
+    listing = list(chain.from_iterable(in_dir.glob("**/*.tiff") for in_dir in in_dirs))
+    img_listing = sorted(listing, key=alpha_num_order_path)
     return img_listing
 
 
