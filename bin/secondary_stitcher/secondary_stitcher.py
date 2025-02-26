@@ -82,6 +82,9 @@ def path_to_dict(path: Path):
     {R:region, X: position, Y: position, path: path}
     """
     value_list = re.split(r"(\d+)(?:_?)", path.name)[:-1]
+    if len(value_list) != 6:
+        print(value_list, "is not the expected 6 items of R, X, Y and their values")
+        return None
     d = dict(zip(*[iter(value_list)] * 2))
     d = {k: int(v) for k, v in d.items()}
     d.update({"path": path})
@@ -126,6 +129,7 @@ def get_slices(
 def get_dataset_info(img_dirs: Iterable[Path]):
     img_paths = get_img_listing(img_dirs)
     positions = [path_to_dict(p) for p in img_paths]
+    print(positions)
     df = pd.DataFrame(positions)
     df.sort_values(["R", "Y", "X"], inplace=True)
     df.reset_index(inplace=True)
