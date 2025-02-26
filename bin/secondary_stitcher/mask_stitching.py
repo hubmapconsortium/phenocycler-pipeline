@@ -167,7 +167,8 @@ def find_and_remove_overlapping_labels_in_first_channel(
                 label_remove_mode += " left "
             else:
                 label_remove_mode += " left right "
-
+            #DEBUG information here
+            print(tiles, y_ntiles, x_ntiles, overlap)
             task.append(
                 dask.delayed(remove_overlapping_labels)(tiles[n], overlap, label_remove_mode)
             )
