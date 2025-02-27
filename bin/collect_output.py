@@ -45,10 +45,10 @@ def modify_and_save_img(
     pixel_size_y: float,
     pixel_unit_x: str,
     pixel_unit_y: str,
-    new_xml: Optional[str],
+    new_xml: Optional[str] = None,
 ):
     with tif.TiffFile(path_to_str(img_path)) as TF:
-        if new_xml == None:
+        if new_xml is None:
             ome_meta = TF.ome_metadata
         else:
             ome_meta = new_xml
@@ -92,15 +92,16 @@ def copy_files(
 
 
 def collect_segm_masks(data_dir: Path, out_dir: Path):
+    filenames_copied = []
     for image_file in data_dir.glob("**/*.ome.tiff"):
-        filename_base = image_file.name.split(".")[0]
         output_file = out_dir / image_file.name
         shutil.copy(image_file, output_file)
+        filenames_copied.append(image_file.name)
+    return filenames_copied
 
 
 def collect_expr(
-    data_dir: Path,
-    listing: dict,
+    mask_filenames: list[str],
     out_dir: Path,
     segmentation_channels: Dict[str, str],
     pixel_size_x: float,
@@ -109,10 +110,12 @@ def collect_expr(
     pixel_unit_y: str,
     ome_tiff: Path,
 ):
-    filename_base = ome_tiff.name.split(".")[0]
-    new_filename = f"{filename_base}_expr.ome.tiff"
+    if len(mask_filenames) == 1:
+        new_filename = mask_filenames[0].replace("mask", "expr")
+    else:
+        filename_base = ome_tiff.name.split(".")[0]
+        new_filename = f"{filename_base}_expr.ome.tiff"
     output_file = out_dir / new_filename
-    new_xml = get_omexml(ome_tiff)
 
     modify_and_save_img(
         ome_tiff,
@@ -122,7 +125,6 @@ def collect_expr(
         pixel_size_y,
         pixel_unit_x,
         pixel_unit_y,
-        new_xml,
     )
 
 
@@ -133,7 +135,6 @@ def collect_ome_tiff(ome_tiff: Path, out_dir: Path):
 
 def main(data_dir: Path, mask_dir: Path, pipeline_config_path: Path, ome_tiff: Path):
     pipeline_config = read_pipeline_config(pipeline_config_path)
-    listing = pipeline_config["dataset_map_all_slices"]
     segmentation_channels = pipeline_config["segmentation_channels"]
     pixel_size_x = pipeline_config["pixel_size_x"]
     pixel_size_y = pipeline_config["pixel_size_y"]
@@ -146,11 +147,10 @@ def main(data_dir: Path, mask_dir: Path, pipeline_config_path: Path, ome_tiff: P
     make_dir_if_not_exists(expr_out_dir)
 
     print("\nCollecting segmentation masks")
-    collect_segm_masks(mask_dir, mask_out_dir)
+    mask_filenames = collect_segm_masks(mask_dir, mask_out_dir)
     print("\nCollecting expressions")
     collect_expr(
-        data_dir,
-        listing,
+        mask_filenames,
         expr_out_dir,
         segmentation_channels,
         pixel_size_x,
@@ -159,7 +159,6 @@ def main(data_dir: Path, mask_dir: Path, pipeline_config_path: Path, ome_tiff: P
         pixel_unit_y,
         ome_tiff,
     )
-    # collect_ome_tiff(ome_tiff, out_dir)
 
 
 if __name__ == "__main__":
