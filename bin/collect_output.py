@@ -158,7 +158,6 @@ def main(data_dir: Path, mask_dir: Path, pipeline_config_path: Path, ome_tiff: P
         pixel_size_y,
         pixel_unit_x,
         pixel_unit_y,
-        antb_info,
         ome_tiff,
     )
     # collect_ome_tiff(ome_tiff, out_dir)
