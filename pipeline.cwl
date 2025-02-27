@@ -99,7 +99,6 @@ steps:
         source: run_slicing/modified_pipeline_config
     out:
       - stitched_images
-      - final_pipeline_config
     run: steps/second_stitching.cwl
 
   collect_output:
