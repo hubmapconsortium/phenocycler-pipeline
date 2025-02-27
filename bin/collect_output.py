@@ -109,22 +109,21 @@ def collect_expr(
     pixel_unit_y: str,
     ome_tiff: Path,
 ):
-    for image_file in data_dir.glob("*.qptiff"):
-        filename_base = image_file.name.split(".")[0]
-        new_filename = f"{filename_base}_expr.ome.tiff"
-        output_file = out_dir / new_filename
-        new_xml = get_omexml(ome_tiff)
+    filename_base = ome_tiff.name.split(".")[0]
+    new_filename = f"{filename_base}_expr.ome.tiff"
+    output_file = out_dir / new_filename
+    new_xml = get_omexml(ome_tiff)
 
-        modify_and_save_img(
-            ome_tiff,
-            output_file,
-            segmentation_channels,
-            pixel_size_x,
-            pixel_size_y,
-            pixel_unit_x,
-            pixel_unit_y,
-            new_xml,
-        )
+    modify_and_save_img(
+        ome_tiff,
+        output_file,
+        segmentation_channels,
+        pixel_size_x,
+        pixel_size_y,
+        pixel_unit_x,
+        pixel_unit_y,
+        new_xml,
+    )
 
 
 def collect_ome_tiff(ome_tiff: Path, out_dir: Path):
