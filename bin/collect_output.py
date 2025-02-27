@@ -1,17 +1,14 @@
 import argparse
 import logging
-import re
 import shutil
-from os import walk
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
 
 import numpy as np
-import pandas as pd
 import tifffile as tif
 from aicsimageio import AICSImage
 from ome_types import from_tiff
-from ome_types.model import AnnotationRef, Map, MapAnnotation, StructuredAnnotationList
+from ome_types.model import StructuredAnnotationList
 
 from utils import make_dir_if_not_exists, path_to_str, read_pipeline_config
 from utils_ome import modify_initial_ome_meta
@@ -40,7 +37,7 @@ def add_z_axis(img_stack: Image):
 def modify_and_save_img(
     img_path: Path,
     out_path: Path,
-    segmentation_channels: Dict[str, str],
+    segmentation_channels: dict[str, str],
     pixel_size_x: float,
     pixel_size_y: float,
     pixel_unit_x: str,
@@ -55,7 +52,12 @@ def modify_and_save_img(
         img_stack = TF.series[0].asarray()
     new_img_stack = add_z_axis(img_stack)
     new_ome_meta = modify_initial_ome_meta(
-        ome_meta, segmentation_channels, pixel_size_x, pixel_size_y, pixel_unit_x, pixel_unit_y
+        ome_meta,
+        segmentation_channels,
+        pixel_size_x,
+        pixel_size_y,
+        pixel_unit_x,
+        pixel_unit_y,
     )
 
     with tif.TiffWriter(path_to_str(out_path), bigtiff=True, shaped=False) as TW:
@@ -66,29 +68,6 @@ def modify_and_save_img(
             description=new_ome_meta,
             metadata=None,
         )
-
-
-def copy_files(
-    file_type: str,
-    src_data_dir: Path,
-    src_dir_name: str,
-    img_name_template: str,
-    out_dir: Path,
-    out_name_template: str,
-    region: int,
-    slices: Dict[str, str],
-    additional_info=None,
-):
-    for img_slice_name, slice_path in slices.items():
-        img_name = img_name_template.format(slice_name="1")
-        src = src_data_dir / src_dir_name / img_name
-        dst = out_dir / out_name_template.format(slice_name="1")
-        if file_type == "mask":
-            shutil.copy(src, dst)
-        elif file_type == "expr":
-            segmentation_channels = additional_info
-            modify_and_save_img(src, dst, segmentation_channels)
-        print("src:", src, "| dst:", dst)
 
 
 def collect_segm_masks(data_dir: Path, out_dir: Path):
@@ -103,7 +82,7 @@ def collect_segm_masks(data_dir: Path, out_dir: Path):
 def collect_expr(
     mask_filenames: list[str],
     out_dir: Path,
-    segmentation_channels: Dict[str, str],
+    segmentation_channels: dict[str, str],
     pixel_size_x: float,
     pixel_size_y: float,
     pixel_unit_x: str,
@@ -118,13 +97,13 @@ def collect_expr(
     output_file = out_dir / new_filename
 
     modify_and_save_img(
-        ome_tiff,
-        output_file,
-        segmentation_channels,
-        pixel_size_x,
-        pixel_size_y,
-        pixel_unit_x,
-        pixel_unit_y,
+        img_path=ome_tiff,
+        out_path=output_file,
+        segmentation_channels=segmentation_channels,
+        pixel_size_x=pixel_size_x,
+        pixel_size_y=pixel_size_y,
+        pixel_unit_x=pixel_unit_x,
+        pixel_unit_y=pixel_unit_y,
     )
 
 
