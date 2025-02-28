@@ -26,9 +26,4 @@ outputs:
   stitched_images:
     type: Directory
     outputBinding:
-      glob: /output/pipeline_output
-
-  final_pipeline_config:
-    type: File
-    outputBinding:
-      glob: /output/pipelineConfig.json
+      glob: output/pipeline_output
