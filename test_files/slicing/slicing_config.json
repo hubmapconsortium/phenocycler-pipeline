@@ -1,0 +1,14 @@
+{
+   "tiling_mode": "grid",
+      "region_height": 10,
+    "region_width": 11,
+   "num_z_planes": 1,
+  "tile_overlap_x": 200,
+    "tile_overlap_y": 200,
+    "tile_height": 1000,
+    "tile_width": 1000,
+    "target_shape": [
+        1000,
+        1000
+    ]
+}

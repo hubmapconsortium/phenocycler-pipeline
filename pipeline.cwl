@@ -2,6 +2,9 @@
 class: Workflow
 cwlVersion: v1.1
 
+requirements:
+- class: ScatterFeatureRequirement
+
 inputs:
   segmentation_method:
     type: string
@@ -64,24 +67,46 @@ steps:
       - segmentation_channels
     run: steps/prepare_segmentation_channels.cwl
 
+  run_slicing:
+    in:
+      segmentation_channels_dir:
+        source: prepare_segmentation_channels/segmentation_channels
+      pipeline_config:
+        source: collect_dataset_info/pipeline_config
+    out:
+      - sliced_tiles
+      - modified_pipeline_config
+    run: steps/slicing.cwl
+
   run_segmentation:
+    scatter: dataset_dir
     in:
       method:
-        source: segmentation_method
+          source: segmentation_method
       dataset_dir:
-        source: prepare_segmentation_channels/segmentation_channels
+        source: run_slicing/sliced_tiles
       gpus:
         source: gpus
     out:
       - mask_dir
     run: steps/run_segmentation.cwl
 
+  stitch_output:
+    in:
+      ometiff_dir:
+        source: run_segmentation/mask_dir
+      pipeline_config:
+        source: run_slicing/modified_pipeline_config
+    out:
+      - stitched_images
+    run: steps/second_stitching.cwl
+
   collect_output:
     in:
       data_dir:
         source: data_dir
       mask_dir:
-        source: run_segmentation/mask_dir
+        source: stitch_output/stitched_images
       pipeline_config:
         source: collect_dataset_info/pipeline_config
       ome_tiff:
