@@ -8,7 +8,7 @@ import numpy as np
 import tifffile as tif
 from aicsimageio import AICSImage
 from ome_types import from_tiff
-from ome_types.model import StructuredAnnotationList
+from ome_types.model import StructuredAnnotations
 
 from utils import make_dir_if_not_exists, path_to_str, read_pipeline_config
 from utils_ome import modify_initial_ome_meta

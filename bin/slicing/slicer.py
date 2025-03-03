@@ -5,7 +5,7 @@ from pathlib import Path
 import dask
 import numpy as np
 import tifffile as tif
-from tiling import GridTiling, SnakeTiling
+from .tiling import GridTiling, SnakeTiling
 
 
 def get_tile(arr, hor_f: int, hor_t: int, ver_f: int, ver_t: int, overlap=0):

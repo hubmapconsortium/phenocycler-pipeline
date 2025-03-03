@@ -5,8 +5,8 @@ from pathlib import Path
 from typing import Tuple
 
 import tifffile as tif
-from modify_pipeline_config import modify_pipeline_config
-from slicer import slice_img
+from .modify_pipeline_config import modify_pipeline_config
+from .slicer import slice_img
 
 filename_pattern = re.compile(r"^aligned_tissue_0_(?P<channel>\w+).tif$")
 
