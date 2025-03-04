@@ -16,6 +16,10 @@ inputs:
     type: File?
   channels_path:
     type: File?
+  slicing_size:
+    type: int?
+  overlap_size:
+    type: int?
 
 outputs:
   pipeline_output:
@@ -73,6 +77,10 @@ steps:
         source: prepare_segmentation_channels/segmentation_channels
       pipeline_config:
         source: collect_dataset_info/pipeline_config
+      slicing_size:
+        source: slicing_size
+      overlap_size:
+        source: overlap_size
     out:
       - sliced_tiles
       - modified_pipeline_config

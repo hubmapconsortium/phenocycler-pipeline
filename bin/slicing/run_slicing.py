@@ -63,7 +63,7 @@ def split_channels_into_tiles(
             )
 
 
-def main(segmentation_channels_dir: Path, pipeline_config_path: Path):
+def main(segmentation_channels_dir: Path, pipeline_config_path: Path, slicing_size: int = None, overlap_size: int = None):
     out_dir = Path("output/new_tiles")
     pipeline_conf_dir = Path("output/pipeline_conf")
     out_dir.mkdir(exist_ok=True, parents=True)
@@ -71,8 +71,8 @@ def main(segmentation_channels_dir: Path, pipeline_config_path: Path):
 
     stitched_img_shape = get_stitched_image_shape(segmentation_channels_dir)
 
-    tile_size = 10000
-    overlap = 100
+    tile_size = slicing_size if slicing_size is not None else 10000
+    overlap = overlap_size if overlap_size is not None else 100
     print("Splitting images into tiles")
     print("Tile size:", tile_size, "| overlap:", overlap)
     split_channels_into_tiles(segmentation_channels_dir, out_dir, tile_size, overlap)
@@ -97,7 +97,17 @@ if __name__ == "__main__":
         type=Path,
         help="path to pipelineConfig.json file",
     )
+    parser.add_argument(
+        "--slicing_size",
+        type=int,
+        help="How large to slice the image in pixels",
+    )
+    parser.add_argument(
+        "--overlap_size",
+        type=int,
+        help="How many pixels overlap between slices"
+    )
 
     args = parser.parse_args()
 
-    main(args.segmentation_channels_dir, args.pipeline_config_path)
+    main(args.segmentation_channels_dir, args.pipeline_config_path, args.slicing_size, args.overlap_size)
