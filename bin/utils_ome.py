@@ -1,10 +1,9 @@
 import html
 import unicodedata
-from io import StringIO
-from io import BytesIO
+from io import BytesIO, StringIO
 from typing import Dict, Literal, Optional
-import lxml.etree as ET
 
+import lxml.etree as ET
 from pint import Quantity, UnitRegistry
 
 target_physical_size = "nm"
@@ -12,7 +11,7 @@ reg = UnitRegistry()
 
 
 def strip_namespace(xmlstr: str):
-    it = ET.iterparse(BytesIO(xmlstr.encode('utf-8')))
+    it = ET.iterparse(BytesIO(xmlstr.encode("utf-8")))
     for _, el in it:
         _, _, el.tag = el.tag.rpartition("}")
     root = it.root
@@ -43,9 +42,9 @@ def add_sa_segmentation_channels_info(omexml: ET.Element, nucleus_channel: str, 
     annotation = ET.SubElement(structured_annotation, "XMLAnnotation", {"ID": "Annotation:0"})
     annotation_value = ET.SubElement(annotation, "Value")
     original_metadata = ET.SubElement(annotation_value, "OriginalMetadata")
-    segmentation_channels_key = ET.SubElement(
-        original_metadata, "Key"
-    ).text = "SegmentationChannels"
+    segmentation_channels_key = ET.SubElement(original_metadata, "Key").text = (
+        "SegmentationChannels"
+    )
     segmentation_channels_value = ET.SubElement(original_metadata, "Value")
     ET.SubElement(segmentation_channels_value, "Nucleus").text = nucleus_channel
     ET.SubElement(segmentation_channels_value, "Cell").text = cell_channel
@@ -92,6 +91,7 @@ def blank_tiffdata(px_node: ET.Element):
                 tiffdata_list.append(child_td)
     return tiffdata_list
 
+
 def generate_and_add_new_tiffdata(px_node: ET.Element, tiffdata_list):
     num_channels = int(px_node.get("SizeC"))
     num_z = int(px_node.get("SizeZ"))
@@ -103,14 +103,13 @@ def generate_and_add_new_tiffdata(px_node: ET.Element, tiffdata_list):
             try:
                 td = next(tiffdata_elements)
             except StopIteration as e:
-                print('Error: not enough TiffData Elements in ',ET.tostring(px_node))
+                print("Error: not enough TiffData Elements in ", ET.tostring(px_node))
             td.set("FirstT", "0")
             td.set("FirstC", str(c))
             td.set("FirstZ", str(z))
             td.set("IFD", str(ifd))
             td.set("PlaneCount", "1")
             ifd += 1
-
 
 
 def modify_initial_ome_meta(
@@ -123,7 +122,7 @@ def modify_initial_ome_meta(
 ) -> bytes:
     new_dim_order = "XYZCT"
     ome_xml: ET.Element = strip_namespace(xml_str)
-    #ome_xml.set("xmlns", "http://www.openmicroscopy.org/Schemas/OME/2016-06")
+    # ome_xml.set("xmlns", "http://www.openmicroscopy.org/Schemas/OME/2016-06")
     px_node = ome_xml.find("Image").find("Pixels")
     px_node.set("DimensionOrder", new_dim_order)
     px_node.set("PhysicalSizeX", str(pixel_size_x))
@@ -136,5 +135,5 @@ def modify_initial_ome_meta(
     add_sa_segmentation_channels_info(
         ome_xml, segmentation_channels["nucleus"], segmentation_channels["cell"]
     )
-    res = ET.tostring(ome_xml, encoding='UTF-8', xml_declaration=True)
+    res = ET.tostring(ome_xml, encoding="UTF-8", xml_declaration=True)
     return res

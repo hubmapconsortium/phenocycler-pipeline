@@ -73,7 +73,7 @@ def copy_segm_channels_to_out_dirs(
     tasks = []
     segm_ch_index = change_vals_to_keys(segmentation_channels)
     for img_slice_name, path in listing.items():
-        #img_path = data_dir / "converted.ome.tiff"
+        # img_path = data_dir / "converted.ome.tiff"
         task = dask.delayed(copy_channels)(
             out_dir,
             img_path,

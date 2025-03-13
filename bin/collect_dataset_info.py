@@ -4,8 +4,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
 import tifffile as tif
-from ome_utils import get_physical_size_quantities
 import yaml
+from ome_utils import get_physical_size_quantities
 
 from dataset_path_arrangement import create_listing_for_each_region
 from utils import (
@@ -35,8 +35,8 @@ def get_pixel_size_from_img(img: Path) -> Tuple[float, float, str, str]:
     dimensions = get_physical_size_quantities(tif.TiffFile(img))
     pixel_size_x = dimensions["X"].magnitude
     pixel_size_y = dimensions["Y"].magnitude
-    pixel_unit_x = format(dimensions["X"].units, '~')
-    pixel_unit_y = format(dimensions["Y"].units, '~')
+    pixel_unit_x = format(dimensions["X"].units, "~")
+    pixel_unit_y = format(dimensions["Y"].units, "~")
     return pixel_size_x, pixel_size_y, pixel_unit_x, pixel_unit_y
 
 
@@ -60,9 +60,10 @@ def get_pixel_size_from_tsv(tsvpath: Path) -> Tuple[float, float, str, str]:
     #    )
 
 
-def get_segm_channel_names_from_ome(path: Path
-                                    , channels_metadata: Dict[str, str]
-                                    ) -> Tuple[Dict[str, int], Dict[str, str]]:
+def get_segm_channel_names_from_ome(
+    path: Path,
+    channels_metadata: Dict[str, str],
+) -> Tuple[Dict[str, int], Dict[str, str]]:
     """
     Returns a 2-tuple:
      [0] Mapping from segmentation channel names to 0-based indexes into channel list
@@ -75,38 +76,38 @@ def get_segm_channel_names_from_ome(path: Path
     segm_ch_names_ids: Dict[str, int] = dict()
     adj_segm_ch_names: Dict[str, str] = dict()
     print(channels_metadata)
-    nucleus_ch = channels_metadata['nucleus']
-    cells_ch = channels_metadata['cell']
+    nucleus_ch = channels_metadata["nucleus"]
+    cells_ch = channels_metadata["cell"]
     print(ch_names_ids)
     for name, channel in ch_names_ids.items():
         if channel[0] == nucleus_ch:
             segm_ch_names_ids[name] = channel[1]
-            adj_segm_ch_names['nucleus'] = name
+            adj_segm_ch_names["nucleus"] = name
         elif channel[0] == cells_ch:
             segm_ch_names_ids[name] = channel[1]
-            adj_segm_ch_names['cell'] = name
-    if adj_segm_ch_names.get('nucleus') is None:
+            adj_segm_ch_names["cell"] = name
+    if adj_segm_ch_names.get("nucleus") is None:
         print("No matching nucleus channel id found, trying channel name")
         channel = ch_names_ids.get(nucleus_ch)
         if channel is None:
             raise Exception("No match in channels.csv for ", nucleus_ch)
         channel_id, channel_num = channel
         segm_ch_names_ids[nucleus_ch] = channel_num
-        adj_segm_ch_names['nucleus'] = nucleus_ch
-    if adj_segm_ch_names.get('cell') is None:
+        adj_segm_ch_names["nucleus"] = nucleus_ch
+    if adj_segm_ch_names.get("cell") is None:
         print("No matching cell channel id found, trying channel name")
         channel = ch_names_ids.get(cells_ch)
         if channel is None:
             raise Exception("No match in channels.csv for ", cells_ch)
         channel_id, channel_num = channel
         segm_ch_names_ids[cells_ch] = channel_num
-        adj_segm_ch_names['cell'] = cells_ch
+        adj_segm_ch_names["cell"] = cells_ch
     return segm_ch_names_ids, adj_segm_ch_names
 
 
 def get_segm_channel_ids_from_ome(
-        path: Path,
-        segm_ch_names: Dict[str, Union[str, List[str]]],
+    path: Path,
+    segm_ch_names: Dict[str, Union[str, List[str]]],
 ) -> Tuple[Dict[str, int], Dict[str, str]]:
     """
     Returns a 2-tuple:
@@ -150,19 +151,19 @@ def get_channel_metadata(data_dir: Path, channels_path: Path):
         if channels_path is None:
             print("No *.channels.csv file found in " + str(data_dir))
             return None
-    with open(channels_path, 'r') as csv_file:
+    with open(channels_path, "r") as csv_file:
         reader = csv.reader(csv_file)
         for row in reader:
             if row[0].casefold() == "channel_id" or row[0].casefold() == "channel id":
                 print(channels_path, " has header row ", row, ". Please delete it and resubmit")
                 continue
             ch_id = row[0]
-            if row[1].casefold() == 'Yes'.casefold() or row[1].casefold() == 'TRUE'.casefold():
-                channel_metadata['nucleus'] = ch_id
-            elif row[1].casefold() != 'No'.casefold():
+            if row[1].casefold() == "Yes".casefold() or row[1].casefold() == "TRUE".casefold():
+                channel_metadata["nucleus"] = ch_id
+            elif row[1].casefold() != "No".casefold():
                 print("Value should be 'Yes' or 'No' not, ", row[1])
-            if row[2].casefold() == 'Yes'.casefold() or row[2].casefold() == 'TRUE'.casefold():
-                channel_metadata['cell'] = ch_id
+            if row[2].casefold() == "Yes".casefold() or row[2].casefold() == "TRUE".casefold():
+                channel_metadata["cell"] = ch_id
     if channel_metadata:
         return channel_metadata
 
@@ -177,10 +178,10 @@ def main(data_dir: Path, meta_path: Path, channels_path: Path, ome_tiff: Path):
 
     x_size, y_size, x_unit, y_unit = get_pixel_size_from_img(first_img_path)
 
-    #for image_file in data_dir.glob("*.tsv"):
-     #   tsv_path = image_file
-        # tsv_path = data_dir.glob("*.ome.tsv")
-        #x_size, y_size, x_unit, y_unit = get_pixel_size_from_tsv(tsv_path)
+    # for image_file in data_dir.glob("*.tsv"):
+    #   tsv_path = image_file
+    # tsv_path = data_dir.glob("*.ome.tsv")
+    # x_size, y_size, x_unit, y_unit = get_pixel_size_from_tsv(tsv_path)
 
     channels_metadata = get_channel_metadata(data_dir, channels_path)
 
