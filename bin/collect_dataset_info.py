@@ -1,5 +1,6 @@
 import argparse
 import csv
+from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
@@ -7,7 +8,6 @@ import tifffile as tif
 import yaml
 from ome_utils import get_physical_size_quantities
 
-from dataset_path_arrangement import create_listing_for_each_region
 from utils import (
     get_channel_names_from_ome,
     make_dir_if_not_exists,
@@ -62,8 +62,8 @@ def get_pixel_size_from_tsv(tsvpath: Path) -> Tuple[float, float, str, str]:
 
 def get_segm_channel_names_from_ome(
     path: Path,
-    channels_metadata: Dict[str, str],
-) -> Tuple[Dict[str, int], Dict[str, str]]:
+    channels_metadata: dict[str, set[str]],
+) -> Tuple[dict[str, int], Dict[str, str]]:
     """
     Returns a 2-tuple:
      [0] Mapping from segmentation channel names to 0-based indexes into channel list
@@ -73,35 +73,41 @@ def get_segm_channel_names_from_ome(
         ome_meta = TF.ome_metadata
     ome_xml = strip_namespace(ome_meta)
     ch_names_ids = get_channel_names_from_ome(ome_xml)
-    segm_ch_names_ids: Dict[str, int] = dict()
-    adj_segm_ch_names: Dict[str, str] = dict()
+    segm_ch_names_ids: dict[str, list[int]] = defaultdict(list)
+    adj_segm_ch_names: dict[str, list[str]] = defaultdict(list)
     print(channels_metadata)
-    nucleus_ch = channels_metadata["nucleus"]
-    cells_ch = channels_metadata["cell"]
+    nucleus_ch_set = channels_metadata["nucleus"]
+    cells_ch_set = channels_metadata["cell"]
     print(ch_names_ids)
     for name, channel in ch_names_ids.items():
-        if channel[0] == nucleus_ch:
-            segm_ch_names_ids[name] = channel[1]
-            adj_segm_ch_names["nucleus"] = name
-        elif channel[0] == cells_ch:
-            segm_ch_names_ids[name] = channel[1]
-            adj_segm_ch_names["cell"] = name
-    if adj_segm_ch_names.get("nucleus") is None:
+        if channel[0] in nucleus_ch_set:
+            segm_ch_names_ids[name].append(channel[1])
+            adj_segm_ch_names["nucleus"].append(name)
+        elif channel[0] in cells_ch_set:
+            segm_ch_names_ids[name].append(channel[1])
+            adj_segm_ch_names["cell"].append(name)
+    if not adj_segm_ch_names.get("nucleus"):
         print("No matching nucleus channel id found, trying channel name")
-        channel = ch_names_ids.get(nucleus_ch)
-        if channel is None:
-            raise Exception("No match in channels.csv for ", nucleus_ch)
-        channel_id, channel_num = channel
-        segm_ch_names_ids[nucleus_ch] = channel_num
-        adj_segm_ch_names["nucleus"] = nucleus_ch
-    if adj_segm_ch_names.get("cell") is None:
+        for nucleus_ch in nucleus_ch_set:
+            channel = ch_names_ids.get(nucleus_ch)
+            if channel is None:
+                continue
+            channel_id, channel_num = channel
+            segm_ch_names_ids[nucleus_ch].append(channel_num)
+            adj_segm_ch_names["nucleus"].append(nucleus_ch)
+        if not adj_segm_ch_names["nucleus"]:
+            raise ValueError("No nucleus channels found")
+    if not adj_segm_ch_names.get("cell"):
         print("No matching cell channel id found, trying channel name")
-        channel = ch_names_ids.get(cells_ch)
-        if channel is None:
-            raise Exception("No match in channels.csv for ", cells_ch)
-        channel_id, channel_num = channel
-        segm_ch_names_ids[cells_ch] = channel_num
-        adj_segm_ch_names["cell"] = cells_ch
+        for cells_ch in cells_ch_set:
+            channel = ch_names_ids.get(cells_ch)
+            if channel is None:
+                continue
+            channel_id, channel_num = channel
+            segm_ch_names_ids[cells_ch].append(channel_num)
+            adj_segm_ch_names["cell"].append(cells_ch)
+        if not adj_segm_ch_names["cell"]:
+            raise ValueError("No cell channels found")
     return segm_ch_names_ids, adj_segm_ch_names
 
 
@@ -141,8 +147,12 @@ def get_first_img_path(data_dir: Path, listing: Dict[int, Dict[str, Path]]) -> P
     return Path(data_dir / first_img_path).absolute()
 
 
-def get_channel_metadata(data_dir: Path, channels_path: Path):
-    channel_metadata = {}
+def is_selected(s: str) -> bool:
+    return s.casefold() in {"yes", "true"}
+
+
+def get_channel_metadata(data_dir: Path, channels_path: Path) -> Optional[dict[str, set[str]]]:
+    channel_metadata = defaultdict(set)
     if channels_path is not None and not channels_path.exists():
         print("Error no " + str(channels_path))
     if channels_path is None:
@@ -154,16 +164,14 @@ def get_channel_metadata(data_dir: Path, channels_path: Path):
     with open(channels_path, "r") as csv_file:
         reader = csv.reader(csv_file)
         for row in reader:
-            if row[0].casefold() == "channel_id" or row[0].casefold() == "channel id":
+            if row[0].casefold().strip() in {"channel_id", "channel id"}:
                 print(channels_path, " has header row ", row, ". Please delete it and resubmit")
                 continue
             ch_id = row[0]
-            if row[1].casefold() == "Yes".casefold() or row[1].casefold() == "TRUE".casefold():
-                channel_metadata["nucleus"] = ch_id
-            elif row[1].casefold() != "No".casefold():
-                print("Value should be 'Yes' or 'No' not, ", row[1])
-            if row[2].casefold() == "Yes".casefold() or row[2].casefold() == "TRUE".casefold():
-                channel_metadata["cell"] = ch_id
+            if is_selected(row[1]):
+                channel_metadata["nucleus"].add(ch_id)
+            if is_selected(row[2]):
+                channel_metadata["cell"].add(ch_id)
     if channel_metadata:
         return channel_metadata
 
