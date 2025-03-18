@@ -176,8 +176,7 @@ def get_channel_metadata(data_dir: Path, channels_path: Path) -> Optional[dict[s
         return channel_metadata
 
 
-def main(data_dir: Path, meta_path: Path, channels_path: Path, ome_tiff: Path):
-    out_dir = Path("/output")
+def main(data_dir: Path, meta_path: Path, channels_path: Path, ome_tiff: Path, out_dir: Path):
     make_dir_if_not_exists(out_dir)
     if ome_tiff is not None:
         first_img_path = ome_tiff
@@ -223,10 +222,41 @@ def main(data_dir: Path, meta_path: Path, channels_path: Path, ome_tiff: Path):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data_dir", type=Path, help="path to the dataset directory")
-    parser.add_argument("--meta_path", type=Path, help="path to dataset metadata yaml")
-    parser.add_argument("--channels_path", type=Path, help="path to the channels.csv file")
-    parser.add_argument("--ome_tiff", type=Path, help="path to the converted ome.tiff file")
+    parser.add_argument(
+        "--data_dir",
+        type=Path,
+        required=True,
+        help="path to the dataset directory",
+    )
+    parser.add_argument(
+        "--meta_path",
+        type=Path,
+        help="path to dataset metadata yaml",
+    )
+    parser.add_argument(
+        "--channels_path",
+        type=Path,
+        required=True,
+        help="path to the channels.csv file",
+    )
+    parser.add_argument(
+        "--ome_tiff",
+        type=Path,
+        required=True,
+        help="path to the converted ome.tiff file",
+    )
+    parser.add_argument(
+        "--output_dir",
+        type=Path,
+        default=Path("/output"),
+        help="path to the converted ome.tiff file",
+    )
     args = parser.parse_args()
 
-    main(args.data_dir, args.meta_path, args.channels_path, args.ome_tiff)
+    main(
+        data_dir=args.data_dir,
+        meta_path=args.meta_path,
+        channels_path=args.channels_path,
+        ome_tiff=args.ome_tiff,
+        out_dir=args.output_dir,
+    )
