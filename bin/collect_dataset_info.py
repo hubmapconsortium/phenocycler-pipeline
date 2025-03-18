@@ -176,7 +176,13 @@ def get_channel_metadata(data_dir: Path, channels_path: Path) -> Optional[dict[s
         return channel_metadata
 
 
-def main(data_dir: Path, meta_path: Path, channels_path: Path, ome_tiff: Path, out_dir: Path):
+def main(
+    data_dir: Path,
+    meta_path: Optional[Path],
+    channels_path: Optional[Path],
+    ome_tiff: Path,
+    out_dir: Path,
+):
     make_dir_if_not_exists(out_dir)
     if ome_tiff is not None:
         first_img_path = ome_tiff
@@ -236,7 +242,6 @@ if __name__ == "__main__":
     parser.add_argument(
         "--channels_path",
         type=Path,
-        required=True,
         help="path to the channels.csv file",
     )
     parser.add_argument(
