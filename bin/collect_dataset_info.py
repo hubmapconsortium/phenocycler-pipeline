@@ -2,6 +2,7 @@ import argparse
 import csv
 from collections import defaultdict
 from pathlib import Path
+from pprint import pprint
 from typing import Dict, List, Optional, Tuple, Union
 
 import tifffile as tif
@@ -9,7 +10,7 @@ import yaml
 from ome_utils import get_physical_size_quantities
 
 from utils import (
-    get_channel_names_from_ome,
+    get_channel_name_id_index_mapping,
     make_dir_if_not_exists,
     path_to_str,
     path_to_str_local,
@@ -60,61 +61,10 @@ def get_pixel_size_from_tsv(tsvpath: Path) -> Tuple[float, float, str, str]:
     #    )
 
 
-def get_segm_channel_names_from_ome(
-    path: Path,
-    channels_metadata: dict[str, set[str]],
-) -> Tuple[dict[str, int], Dict[str, str]]:
-    """
-    Returns a 2-tuple:
-     [0] Mapping from segmentation channel names to 0-based indexes into channel list
-     [1] Adjustment of segm_ch_names listing the first segmentation channel found
-    """
-    with tif.TiffFile(path_to_str(path)) as TF:
-        ome_meta = TF.ome_metadata
-    ome_xml = strip_namespace(ome_meta)
-    ch_names_ids = get_channel_names_from_ome(ome_xml)
-    segm_ch_names_ids: dict[str, list[int]] = defaultdict(list)
-    adj_segm_ch_names: dict[str, list[str]] = defaultdict(list)
-    print(channels_metadata)
-    nucleus_ch_set = channels_metadata["nucleus"]
-    cells_ch_set = channels_metadata["cell"]
-    print(ch_names_ids)
-    for name, channel in ch_names_ids.items():
-        if channel[0] in nucleus_ch_set:
-            segm_ch_names_ids[name].append(channel[1])
-            adj_segm_ch_names["nucleus"].append(name)
-        elif channel[0] in cells_ch_set:
-            segm_ch_names_ids[name].append(channel[1])
-            adj_segm_ch_names["cell"].append(name)
-    if not adj_segm_ch_names.get("nucleus"):
-        print("No matching nucleus channel id found, trying channel name")
-        for nucleus_ch in nucleus_ch_set:
-            channel = ch_names_ids.get(nucleus_ch)
-            if channel is None:
-                continue
-            channel_id, channel_num = channel
-            segm_ch_names_ids[nucleus_ch].append(channel_num)
-            adj_segm_ch_names["nucleus"].append(nucleus_ch)
-        if not adj_segm_ch_names["nucleus"]:
-            raise ValueError("No nucleus channels found")
-    if not adj_segm_ch_names.get("cell"):
-        print("No matching cell channel id found, trying channel name")
-        for cells_ch in cells_ch_set:
-            channel = ch_names_ids.get(cells_ch)
-            if channel is None:
-                continue
-            channel_id, channel_num = channel
-            segm_ch_names_ids[cells_ch].append(channel_num)
-            adj_segm_ch_names["cell"].append(cells_ch)
-        if not adj_segm_ch_names["cell"]:
-            raise ValueError("No cell channels found")
-    return segm_ch_names_ids, adj_segm_ch_names
-
-
 def get_segm_channel_ids_from_ome(
     path: Path,
-    segm_ch_names: Dict[str, Union[str, List[str]]],
-) -> Tuple[Dict[str, int], Dict[str, str]]:
+    channels_metadata: dict[str, set[str]],
+) -> Tuple[dict[str, list[int]], Dict[str, list[int]]]:
     """
     Returns a 2-tuple:
      [0] Mapping from segmentation channel names to 0-based indexes into channel list
@@ -123,22 +73,17 @@ def get_segm_channel_ids_from_ome(
     with tif.TiffFile(path_to_str(path)) as TF:
         ome_meta = TF.ome_metadata
     ome_xml = strip_namespace(ome_meta)
-    ch_names_ids = get_channel_names_from_ome(ome_xml)
-    segm_ch_names_ids: Dict[str, int] = dict()
-    adj_segm_ch_names: Dict[str, str] = dict()
-    for ch_type, name_or_names in segm_ch_names.items():
-        if isinstance(name_or_names, str):
-            name_or_names = [name_or_names]
-        for name in name_or_names:
-            try:
-                segm_ch_names_ids[name] = ch_names_ids[name][1]
-                adj_segm_ch_names[ch_type] = name
-                break
-            except KeyError:
-                pass
-        else:
-            raise KeyError(f"any of {name_or_names}")
-    return segm_ch_names_ids, adj_segm_ch_names
+    name_id_index_mapping: dict[str, list[int]] = get_channel_name_id_index_mapping(ome_xml)
+    pprint(name_id_index_mapping)
+    segm_ch_ids: dict[str, list[str]] = defaultdict(list)
+    pprint(channels_metadata)
+
+    for segm_type in ["cell", "nucleus"]:
+        channel_set = channels_metadata[segm_type]
+        for channel_name_or_id in channel_set:
+            segm_ch_ids[segm_type].extend(name_id_index_mapping[channel_name_or_id])
+
+    return dict(segm_ch_ids), dict(name_id_index_mapping)
 
 
 def get_first_img_path(data_dir: Path, listing: Dict[int, Dict[str, Path]]) -> Path:
@@ -200,27 +145,25 @@ def main(
 
     if channels_metadata is None:
         meta = read_meta(meta_path)
-        segmentation_channels = meta["segmentation_channels"]
-        segm_ch_names_ids, adj_segmentation_channels = get_segm_channel_ids_from_ome(
-            first_img_path, segmentation_channels
-        )
-    else:
-        segm_ch_names_ids, adj_segmentation_channels = get_segm_channel_names_from_ome(
-            first_img_path, channels_metadata
-        )
+        channels_metadata = meta["segmentation_channels"]
+
+    segm_ch_ids, name_id_index_mapping = get_segm_channel_ids_from_ome(
+        first_img_path, channels_metadata
+    )
 
     listing = {first_img_path.name.split(".")[0]: first_img_path}
 
     listing_str = convert_all_paths_to_str(listing)
 
-    pipeline_config = dict()
-    pipeline_config["segmentation_channels"] = adj_segmentation_channels
-    pipeline_config["dataset_map_all_slices"] = listing_str
-    pipeline_config["segmentation_channel_ids"] = segm_ch_names_ids
-    pipeline_config["pixel_size_x"] = x_size
-    pipeline_config["pixel_size_y"] = y_size
-    pipeline_config["pixel_unit_x"] = x_unit
-    pipeline_config["pixel_unit_y"] = y_unit
+    pipeline_config = {
+        "segmentation_channel_ids": segm_ch_ids,
+        "dataset_map_all_slices": listing_str,
+        "name_id_index_mapping": name_id_index_mapping,
+        "pixel_size_x": x_size,
+        "pixel_size_y": y_size,
+        "pixel_unit_x": x_unit,
+        "pixel_unit_y": y_unit,
+    }
 
     pipeline_config_path = out_dir / "pipeline_config.yaml"
     save_pipeline_config(pipeline_config, pipeline_config_path)

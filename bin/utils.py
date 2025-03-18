@@ -1,5 +1,5 @@
+from collections import defaultdict
 from pathlib import Path
-from typing import Dict, Tuple
 
 import yaml
 
@@ -28,12 +28,11 @@ def save_pipeline_config(config: dict, out_path: Path):
         yaml.safe_dump(config, s)
 
 
-def get_channel_names_from_ome(xml) -> Dict[str, Tuple[str, int]]:
+def get_channel_name_id_index_mapping(xml) -> dict[str, list[int]]:
     pixels = xml.find("Image").find("Pixels")
     channels = pixels.findall("Channel")
-    ch_names_ids = dict()
-    for n, ch in enumerate(channels):
-        ch_name = ch.get("Name")
-        ch_id_ome = ch.get("ID")  # e.g. Channel:0:12
-        ch_names_ids[ch_name] = (ch_id_ome, n)
-    return ch_names_ids
+    mapping = defaultdict(list)
+    for i, ch in enumerate(channels):
+        mapping[ch.get("Name")].append(i)
+        mapping[ch.get("ID")].append(i)
+    return dict(mapping)
