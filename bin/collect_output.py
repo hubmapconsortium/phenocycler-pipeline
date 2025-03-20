@@ -37,7 +37,8 @@ def add_z_axis(img_stack: Image):
 def modify_and_save_img(
     img_path: Path,
     out_path: Path,
-    segmentation_channels: dict[str, str],
+    segmentation_channel_ids: dict[str, list[int]],
+    channel_names: list[str],
     pixel_size_x: float,
     pixel_size_y: float,
     pixel_unit_x: str,
@@ -52,12 +53,13 @@ def modify_and_save_img(
         img_stack = TF.series[0].asarray()
     new_img_stack = add_z_axis(img_stack)
     new_ome_meta = modify_initial_ome_meta(
-        ome_meta,
-        segmentation_channels,
-        pixel_size_x,
-        pixel_size_y,
-        pixel_unit_x,
-        pixel_unit_y,
+        xml_str=ome_meta,
+        segmentation_channel_ids=segmentation_channel_ids,
+        channel_names=channel_names,
+        pixel_size_x=pixel_size_x,
+        pixel_size_y=pixel_size_y,
+        pixel_unit_x=pixel_unit_x,
+        pixel_unit_y=pixel_unit_y,
     )
 
     with tif.TiffWriter(path_to_str(out_path), bigtiff=True, shaped=False) as TW:
@@ -82,7 +84,8 @@ def collect_segm_masks(data_dir: Path, out_dir: Path):
 def collect_expr(
     mask_filenames: list[str],
     out_dir: Path,
-    segmentation_channels: dict[str, str],
+    segmentation_channel_ids: dict[str, list[int]],
+    channel_names: list[str],
     pixel_size_x: float,
     pixel_size_y: float,
     pixel_unit_x: str,
@@ -99,7 +102,8 @@ def collect_expr(
     modify_and_save_img(
         img_path=ome_tiff,
         out_path=output_file,
-        segmentation_channels=segmentation_channels,
+        segmentation_channel_ids=segmentation_channel_ids,
+        channel_names=channel_names,
         pixel_size_x=pixel_size_x,
         pixel_size_y=pixel_size_y,
         pixel_unit_x=pixel_unit_x,
@@ -112,13 +116,8 @@ def collect_ome_tiff(ome_tiff: Path, out_dir: Path):
     shutil.copy(ome_tiff, output_file)
 
 
-def main(data_dir: Path, mask_dir: Path, pipeline_config_path: Path, ome_tiff: Path):
+def main(mask_dir: Path, pipeline_config_path: Path, ome_tiff: Path):
     pipeline_config = read_pipeline_config(pipeline_config_path)
-    segmentation_channels = pipeline_config["segmentation_channels"]
-    pixel_size_x = pipeline_config["pixel_size_x"]
-    pixel_size_y = pipeline_config["pixel_size_y"]
-    pixel_unit_x = pipeline_config["pixel_unit_x"]
-    pixel_unit_y = pipeline_config["pixel_unit_y"]
     out_dir = Path("/output/pipeline_output")
     mask_out_dir = out_dir / "mask"
     expr_out_dir = out_dir / "expr"
@@ -129,23 +128,27 @@ def main(data_dir: Path, mask_dir: Path, pipeline_config_path: Path, ome_tiff: P
     mask_filenames = collect_segm_masks(mask_dir, mask_out_dir)
     print("\nCollecting expressions")
     collect_expr(
-        mask_filenames,
-        expr_out_dir,
-        segmentation_channels,
-        pixel_size_x,
-        pixel_size_y,
-        pixel_unit_x,
-        pixel_unit_y,
-        ome_tiff,
+        mask_filenames=mask_filenames,
+        out_dir=expr_out_dir,
+        segmentation_channel_ids=pipeline_config["segmentation_channel_ids"],
+        channel_names=pipeline_config["channel_names"],
+        pixel_size_x=pipeline_config["pixel_size_x"],
+        pixel_size_y=pipeline_config["pixel_size_y"],
+        pixel_unit_x=pipeline_config["pixel_unit_x"],
+        pixel_unit_y=pipeline_config["pixel_unit_y"],
+        ome_tiff=ome_tiff,
     )
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data_dir", type=Path, help="path to directory with images")
     parser.add_argument("--mask_dir", type=Path, help="path to directory with segmentation masks")
     parser.add_argument("--pipeline_config", type=Path, help="path to region map file YAML")
     parser.add_argument("--ome_tiff", type=Path, help="path to the converted ome.tiff file")
     args = parser.parse_args()
 
-    main(args.data_dir, args.mask_dir, args.pipeline_config, args.ome_tiff)
+    main(
+        mask_dir=args.mask_dir,
+        pipeline_config_path=args.pipeline_config,
+        ome_tiff=args.ome_tiff,
+    )

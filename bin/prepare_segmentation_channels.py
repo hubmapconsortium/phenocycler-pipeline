@@ -93,6 +93,10 @@ def main(data_dir: Path, pipeline_config_path: Path, ome_tiff: Path, output_dir:
     listing = pipeline_config["dataset_map_all_slices"]
 
     segm_ch_ids = pipeline_config["segmentation_channel_ids"]
+    for segm_type, channel_indexes in segm_ch_ids.items():
+        print(segm_type, "segmentation channels:")
+        for channel_index in channel_indexes:
+            print("\t", pipeline_config["channel_names"][channel_index], sep="")
 
     dask.config.set({"num_workers": 5, "scheduler": "processes"})
 

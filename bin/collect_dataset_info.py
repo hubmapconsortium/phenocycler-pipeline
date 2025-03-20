@@ -3,8 +3,9 @@ import csv
 from collections import defaultdict
 from pathlib import Path
 from pprint import pprint
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Optional
 
+import aicsimageio
 import tifffile as tif
 import yaml
 from ome_utils import get_physical_size_quantities
@@ -25,14 +26,14 @@ def read_meta(meta_path: Path) -> dict:
     return meta
 
 
-def convert_all_paths_to_str(listing: dict) -> Dict[int, Dict[str, str]]:
+def convert_all_paths_to_str(listing: dict) -> dict[int, dict[str, str]]:
     all_ch_dirs = dict()
     for channel_name, ch_path in listing.items():
         all_ch_dirs[channel_name] = path_to_str_local(ch_path)
     return all_ch_dirs
 
 
-def get_pixel_size_from_img(img: Path) -> Tuple[float, float, str, str]:
+def get_pixel_size_from_img(img: Path) -> tuple[float, float, str, str]:
     dimensions = get_physical_size_quantities(tif.TiffFile(img))
     pixel_size_x = dimensions["X"].magnitude
     pixel_size_y = dimensions["Y"].magnitude
@@ -41,7 +42,7 @@ def get_pixel_size_from_img(img: Path) -> Tuple[float, float, str, str]:
     return pixel_size_x, pixel_size_y, pixel_unit_x, pixel_unit_y
 
 
-def get_pixel_size_from_tsv(tsvpath: Path) -> Tuple[float, float, str, str]:
+def get_pixel_size_from_tsv(tsvpath: Path) -> tuple[float, float, str, str]:
     # print(tsvpath)
     with open(path_to_str(tsvpath)) as tsvfile:
         reader = csv.DictReader(tsvfile, delimiter="\t")
@@ -64,7 +65,7 @@ def get_pixel_size_from_tsv(tsvpath: Path) -> Tuple[float, float, str, str]:
 def get_segm_channel_ids_from_ome(
     path: Path,
     channels_metadata: dict[str, set[str]],
-) -> Tuple[dict[str, list[int]], Dict[str, list[int]]]:
+) -> tuple[dict[str, list[str]], dict[str, list[int]]]:
     """
     Returns a 2-tuple:
      [0] Mapping from segmentation channel names to 0-based indexes into channel list
@@ -86,7 +87,7 @@ def get_segm_channel_ids_from_ome(
     return dict(segm_ch_ids), dict(name_id_index_mapping)
 
 
-def get_first_img_path(data_dir: Path, listing: Dict[int, Dict[str, Path]]) -> Path:
+def get_first_img_path(data_dir: Path, listing: dict[int, dict[str, Path]]) -> Path:
     first_region = min(list(listing.keys()))
     first_img_path = list(listing[first_region].values())[0]
     return Path(data_dir / first_img_path).absolute()
@@ -141,6 +142,7 @@ def main(
     # tsv_path = data_dir.glob("*.ome.tsv")
     # x_size, y_size, x_unit, y_unit = get_pixel_size_from_tsv(tsv_path)
 
+    channel_names = [str(c) for c in aicsimageio.AICSImage(first_img_path).channel_names]
     channels_metadata = get_channel_metadata(data_dir, channels_path)
 
     if channels_metadata is None:
@@ -156,6 +158,7 @@ def main(
     listing_str = convert_all_paths_to_str(listing)
 
     pipeline_config = {
+        "channel_names": channel_names,
         "segmentation_channel_ids": segm_ch_ids,
         "dataset_map_all_slices": listing_str,
         "name_id_index_mapping": name_id_index_mapping,

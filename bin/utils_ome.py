@@ -18,7 +18,9 @@ def strip_namespace(xmlstr: str):
     return root
 
 
-def add_sa_segmentation_channels_info(omexml: ET.Element, nucleus_channel: str, cell_channel: str):
+def add_sa_segmentation_channels_info(
+    omexml: ET.Element, nucleus_channels: list[str], cell_channels: list[str]
+):
     """
     Will add this, to the root, after Image node
     <StructuredAnnotations>
@@ -42,12 +44,12 @@ def add_sa_segmentation_channels_info(omexml: ET.Element, nucleus_channel: str, 
     annotation = ET.SubElement(structured_annotation, "XMLAnnotation", {"ID": "Annotation:0"})
     annotation_value = ET.SubElement(annotation, "Value")
     original_metadata = ET.SubElement(annotation_value, "OriginalMetadata")
-    segmentation_channels_key = ET.SubElement(original_metadata, "Key").text = (
-        "SegmentationChannels"
-    )
+    ET.SubElement(original_metadata, "Key").text = "SegmentationChannels"
     segmentation_channels_value = ET.SubElement(original_metadata, "Value")
-    ET.SubElement(segmentation_channels_value, "Nucleus").text = nucleus_channel
-    ET.SubElement(segmentation_channels_value, "Cell").text = cell_channel
+    for nucleus_channel in nucleus_channels:
+        ET.SubElement(segmentation_channels_value, "Nucleus").text = nucleus_channel
+    for cell_channel in cell_channels:
+        ET.SubElement(segmentation_channels_value, "Cell").text = cell_channel
 
 
 def physical_size_to_quantity(
@@ -114,7 +116,8 @@ def generate_and_add_new_tiffdata(px_node: ET.Element, tiffdata_list):
 
 def modify_initial_ome_meta(
     xml_str: str,
-    segmentation_channels: Dict[str, str],
+    segmentation_channel_ids: dict[str, list[int]],
+    channel_names: list[str],
     pixel_size_x: float,
     pixel_size_y: float,
     pixel_unit_x: str,
@@ -132,8 +135,10 @@ def modify_initial_ome_meta(
     convert_size_to_nm(px_node)
     tiffdata_list = blank_tiffdata(px_node)
     generate_and_add_new_tiffdata(px_node, tiffdata_list)
-    add_sa_segmentation_channels_info(
-        ome_xml, segmentation_channels["nucleus"], segmentation_channels["cell"]
-    )
+
+    nucleus_channels = [channel_names[i] for i in segmentation_channel_ids["nucleus"]]
+    cell_channels = [channel_names[i] for i in segmentation_channel_ids["cell"]]
+
+    add_sa_segmentation_channels_info(ome_xml, nucleus_channels, cell_channels)
     res = ET.tostring(ome_xml, encoding="UTF-8", xml_declaration=True)
     return res
