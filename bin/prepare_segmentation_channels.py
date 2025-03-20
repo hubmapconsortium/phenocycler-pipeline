@@ -1,38 +1,32 @@
 import argparse
 from pathlib import Path
 from pprint import pprint
-from typing import Dict, List
 
 import dask
 import tifffile as tif
 
-from utils import (
-    make_dir_if_not_exists,
-    path_to_str,
-    path_to_str_local,
-    read_pipeline_config,
-)
+from utils import read_pipeline_config
 
 
-def create_dirs_per_region(listing: Dict[int, Dict[str, str]], out_dir: Path) -> Dict[int, Path]:
-    dirs_per_region = dict()
+def create_dirs_per_region(listing: dict[int, dict[str, str]], out_dir: Path) -> dict[int, Path]:
+    dirs_per_region = {}
     dir_name_template = "region_{region:03d}"
     for region in listing:
         dir_path = out_dir / dir_name_template.format(region=region)
-        make_dir_if_not_exists(dir_path)
+        dir_path.mkdir(exist_ok=True, parents=True)
         dirs_per_region[region] = dir_path
     return dirs_per_region
 
 
 def change_vals_to_keys(input_dict: dict) -> dict:
-    vals_to_keys = dict()
+    vals_to_keys = {}
     for key, val in input_dict.items():
         vals_to_keys[val] = key
     return vals_to_keys
 
 
-def extract_segm_channels(path: Path, segm_ch_ids: Dict[str, list[int]]):
-    stack = tif.imread(path_to_str(path))
+def extract_segm_channels(path: Path, segm_ch_ids: dict[str, list[int]]):
+    stack = tif.imread(path)
     if len(stack.shape) < 3:
         raise ValueError("Input image is not multichannel")
     segm_channels = {}
@@ -45,7 +39,7 @@ def copy_channels(
     out_dir: Path,
     img_path: Path,
     img_slice_name: str,
-    segmentation_channel_ids: Dict[str, list[int]],
+    segmentation_channel_ids: dict[str, list[int]],
 ):
     new_name_template = "{slice_name}_{segm_ch_name}.tif"
     segm_channels = extract_segm_channels(img_path, segmentation_channel_ids)
@@ -63,8 +57,8 @@ def copy_channels(
 
 def copy_segm_channels_to_out_dirs(
     img_path: Path,
-    listing: Dict[int, Dict[str, str]],
-    segmentation_channel_ids: Dict[str, list[int]],
+    listing: dict[int, dict[str, str]],
+    segmentation_channel_ids: dict[str, list[int]],
     out_dir: Path,
 ):
     tasks = []
@@ -88,7 +82,7 @@ def main(data_dir: Path, pipeline_config_path: Path, ome_tiff: Path, output_dir:
 
     pipeline_config = read_pipeline_config(pipeline_config_path)
     segm_ch_out_dir = output_dir / "segmentation_channels"
-    make_dir_if_not_exists(segm_ch_out_dir)
+    segm_ch_out_dir.mkdir(exist_ok=True, parents=True)
 
     listing = pipeline_config["dataset_map_all_slices"]
 

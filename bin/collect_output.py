@@ -10,7 +10,7 @@ from aicsimageio import AICSImage
 from ome_types import from_tiff
 from ome_types.model import StructuredAnnotationList
 
-from utils import make_dir_if_not_exists, path_to_str, read_pipeline_config
+from utils import read_pipeline_config
 from utils_ome import modify_initial_ome_meta
 
 Image = np.ndarray
@@ -45,7 +45,7 @@ def modify_and_save_img(
     pixel_unit_y: str,
     new_xml: Optional[str] = None,
 ):
-    with tif.TiffFile(path_to_str(img_path)) as TF:
+    with tif.TiffFile(img_path) as TF:
         if new_xml is None:
             ome_meta = TF.ome_metadata
         else:
@@ -62,7 +62,7 @@ def modify_and_save_img(
         pixel_unit_y=pixel_unit_y,
     )
 
-    with tif.TiffWriter(path_to_str(out_path), bigtiff=True, shaped=False) as TW:
+    with tif.TiffWriter(out_path, bigtiff=True, shaped=False) as TW:
         TW.write(
             new_img_stack,
             contiguous=True,
@@ -121,8 +121,8 @@ def main(mask_dir: Path, pipeline_config_path: Path, ome_tiff: Path):
     out_dir = Path("/output/pipeline_output")
     mask_out_dir = out_dir / "mask"
     expr_out_dir = out_dir / "expr"
-    make_dir_if_not_exists(mask_out_dir)
-    make_dir_if_not_exists(expr_out_dir)
+    mask_out_dir.mkdir(exist_ok=True, parents=True)
+    expr_out_dir.mkdir(exist_ok=True, parents=True)
 
     print("\nCollecting segmentation masks")
     mask_filenames = collect_segm_masks(mask_dir, mask_out_dir)

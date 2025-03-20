@@ -1,7 +1,7 @@
 import html
 import unicodedata
-from io import BytesIO, StringIO
-from typing import Dict, Literal, Optional
+from io import BytesIO
+from typing import Literal, Optional
 
 import lxml.etree as ET
 from pint import Quantity, UnitRegistry

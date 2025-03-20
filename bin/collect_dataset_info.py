@@ -1,6 +1,7 @@
 import argparse
 import csv
 from collections import defaultdict
+from os import fspath
 from pathlib import Path
 from pprint import pprint
 from typing import Optional
@@ -12,9 +13,6 @@ from ome_utils import get_physical_size_quantities
 
 from utils import (
     get_channel_name_id_index_mapping,
-    make_dir_if_not_exists,
-    path_to_str,
-    path_to_str_local,
     save_pipeline_config,
 )
 from utils_ome import strip_namespace
@@ -29,7 +27,7 @@ def read_meta(meta_path: Path) -> dict:
 def convert_all_paths_to_str(listing: dict) -> dict[int, dict[str, str]]:
     all_ch_dirs = dict()
     for channel_name, ch_path in listing.items():
-        all_ch_dirs[channel_name] = path_to_str_local(ch_path)
+        all_ch_dirs[channel_name] = fspath(ch_path)
     return all_ch_dirs
 
 
@@ -43,8 +41,7 @@ def get_pixel_size_from_img(img: Path) -> tuple[float, float, str, str]:
 
 
 def get_pixel_size_from_tsv(tsvpath: Path) -> tuple[float, float, str, str]:
-    # print(tsvpath)
-    with open(path_to_str(tsvpath)) as tsvfile:
+    with open(tsvpath) as tsvfile:
         reader = csv.DictReader(tsvfile, delimiter="\t")
         for row in reader:
             pixel_size_x = float(row["pixel_size_x_value"])
@@ -53,13 +50,6 @@ def get_pixel_size_from_tsv(tsvpath: Path) -> tuple[float, float, str, str]:
             pixel_unit_y = row["pixel_size_y_unit"]
 
     return pixel_size_x, pixel_size_y, pixel_unit_x, pixel_unit_y
-    # with tif.TiffWriter(path_to_str(tifpath), bigtiff=True) as tf:
-    #    tf.write(
-    #        metadata={
-    #            'PhysicalSizeX' : pixel_size_x,
-    #            'PhysicalSizeY' : pixel_size_y
-    #        }
-    #    )
 
 
 def get_segm_channel_ids_from_ome(
@@ -71,7 +61,7 @@ def get_segm_channel_ids_from_ome(
      [0] Mapping from segmentation channel names to 0-based indexes into channel list
      [1] Adjustment of segm_ch_names listing the first segmentation channel found
     """
-    with tif.TiffFile(path_to_str(path)) as TF:
+    with tif.TiffFile(path) as TF:
         ome_meta = TF.ome_metadata
     ome_xml = strip_namespace(ome_meta)
     name_id_index_mapping: dict[str, list[int]] = get_channel_name_id_index_mapping(ome_xml)
@@ -129,7 +119,7 @@ def main(
     ome_tiff: Path,
     out_dir: Path,
 ):
-    make_dir_if_not_exists(out_dir)
+    out_dir.mkdir(exist_ok=True, parents=True)
     if ome_tiff is not None:
         first_img_path = ome_tiff
     else:
