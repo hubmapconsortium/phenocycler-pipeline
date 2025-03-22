@@ -103,8 +103,6 @@ steps:
 
   collect_output:
     in:
-      data_dir:
-        source: data_dir
       mask_dir:
         source: stitch_output/stitched_images
       pipeline_config:
