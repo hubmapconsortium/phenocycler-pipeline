@@ -11,7 +11,7 @@ requirements:
       - entryname: script.sh
         entry: |-
           file=($1/raw/images/*.qptiff)
-          if [ -f \${file[0]} ]; then
+          if [ -f "\${file[0]}" ]; then
             echo "Running on \${file[0]}"
           else
            file=\$(find $1 -name "*.qptiff")
@@ -22,6 +22,7 @@ requirements:
             echo "Skipping conversion as no qptiff found, using \${file[0]}"
             cp "\${file[0]}" /output/converted.ome.tiff
             exit 0
+          fi
           fi
           /opt/bioformats2raw/bin/bioformats2raw --resolutions 1 --series 0 "\${file[0]}" /output/converted.raw
           /opt/raw2ometiff/bin/raw2ometiff /output/converted.raw /output/converted.ome.tiff
