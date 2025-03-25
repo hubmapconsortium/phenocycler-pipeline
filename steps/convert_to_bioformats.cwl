@@ -15,7 +15,7 @@ requirements:
             echo "Running on \${file[0]}"
           else
            file=\$(find $1 -name "*.qptiff")
-           if [ -f \${file[0]} ] ; then
+           if [ -f "\${file[0]}" ] ; then
              echo "Running on \${file[0]} as no qptiff in /raw/images/"
            else
             file=\$(find $1 -name "*.ome.tif" -or -name "*.ome.tiff")
