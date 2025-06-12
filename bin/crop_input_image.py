@@ -84,6 +84,7 @@ def crop_image(image_path: Path, dataset_directory: Path):
         # TODO: use a better interface; the SectionAligner defaults
         #   are stored in the argparse ArgumentParser and would need
         #   to be duplicated here to call it directly
+        print("No GeoJSON file found; using SectionAligner for automatic cropping")
         command = [
             "python",
             "/opt/section_aligner.py",
@@ -95,6 +96,7 @@ def crop_image(image_path: Path, dataset_directory: Path):
         print("Running", shlex.join(command))
         check_call(command)
     else:
+        print("Found GeoJSON file at", maybe_geojson_file)
         crop_geojson(image_path, maybe_geojson_file, padding_default)
 
 
