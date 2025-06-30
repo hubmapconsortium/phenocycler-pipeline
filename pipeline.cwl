@@ -32,13 +32,15 @@ steps:
       - ome_tiff
     run: steps/convert_to_bioformats.cwl
 
-  section_aligner:
+  crop_image:
     in:
       ome_tiff:
-       source: convert_to_bioformats/ome_tiff
+        source: convert_to_bioformats/ome_tiff
+      data_directory:
+        source: data_dir
     out:
      - crop_ome_tiff
-    run: steps/run_section_aligner.cwl
+    run: steps/crop_input_image.cwl
 
   collect_dataset_info:
     in:
