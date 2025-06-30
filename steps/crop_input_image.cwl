@@ -1,26 +1,23 @@
 cwlVersion: v1.1
 class: CommandLineTool
-label: Run Section Aligner to take out a single section of tissue and crop
+label: Crop image to tissue selection, either detected or read from GeoJSON
 
 requirements:
   DockerRequirement:
     dockerPull: hubmap/phenocycler-scripts:latest
     dockerOutputDirectory: "/output"
 
-arguments:
- - '--crop_only'
- - '--output_dir=/output'
- - '--num_tissue=1'
-baseCommand: ["python", "/opt/section_aligner.py"]
+baseCommand: ["python", "/opt/crop_input_image.py"]
 
 inputs:
   ome_tiff:
     type: File
     inputBinding:
-      prefix: --input_path=
-      separate: false
-      position: 2
-
+      position: 0
+  dataset_dir:
+    type: Directory
+    inputBinding:
+      position: 1
 
 outputs:
   crop_ome_tiff:
