@@ -106,4 +106,4 @@ if __name__ == "__main__":
     p.add_argument("dataset_dir", type=Path)
     args = p.parse_args()
 
-    crop_geojson(args.image_path, args.geojson_path, args.padding)
+    crop_image(args.image_path, args.dataset_dir)
