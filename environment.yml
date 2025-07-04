@@ -24,4 +24,5 @@ dependencies:
         - pint==0.22
         - jsonschema==4.19.0
         - optuna==3.6.1
+        - rasterio==1.4.3
         - git+https://github.com/hubmapconsortium/ome-utils@v0.3.4
