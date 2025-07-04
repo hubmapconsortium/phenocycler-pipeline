@@ -4,7 +4,7 @@ label: Collect dataset info
 
 requirements:
   DockerRequirement:
-    dockerPull: hubmap/phenocycler-scripts:latest
+    dockerPull: hubmap/phenocycler-scripts:1.2.0-post3
     dockerOutputDirectory: "/output"
 
 baseCommand: ["python", "/opt/collect_dataset_info.py"]
