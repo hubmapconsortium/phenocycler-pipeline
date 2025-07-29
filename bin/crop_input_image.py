@@ -40,6 +40,9 @@ def crop_geojson(image_path: Path, geojson_path: Path, padding: int, debug: bool
     print("Loading GeoJSON from", geojson_path)
     with open(geojson_path) as f:
         crop_geometry = shapely.from_geojson(f.read())
+        if not isinstance(crop_geometry, shapely.GeometryCollection):
+            crop_geometry = shapely.geometrycollections([crop_geometry])
+
         closed_geometry = shapely.GeometryCollection(
             [shapely.Polygon(poly.exterior.coords) for poly in crop_geometry.geoms]
         )
