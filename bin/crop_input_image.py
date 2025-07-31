@@ -30,7 +30,7 @@ def find_geojson(directory: Path) -> Optional[Path]:
 
 
 def crop_geojson(image_path: Path, geojson_path: Path, padding: int, debug: bool):
-    debug_out_dir = Path("debug")
+    debug_out_dir = Path("crop-debug")
 
     print("Reading image from", image_path)
     image = aicsimageio.AICSImage(image_path)
@@ -54,13 +54,13 @@ def crop_geojson(image_path: Path, geojson_path: Path, padding: int, debug: bool
         crop_geom_gs = gpd.GeoSeries(crop_geometry)
         with new_plot():
             axi = plt.imshow(pixel_channel_sum_log1p, cmap="gray")
-            crop_geom_gs.plot(ax=axi.axes, color="red")
+            crop_geom_gs.plot(ax=axi.axes, color="#FF000080")
             axi.figure.savefig(debug_out_dir / "1-orig.pdf", bbox_inches="tight")
 
         closed_geom_gs = gpd.GeoSeries(closed_geometry)
         with new_plot():
             axi = plt.imshow(pixel_channel_sum_log1p, cmap="gray")
-            closed_geom_gs.plot(ax=axi.axes, color="red")
+            closed_geom_gs.plot(ax=axi.axes, color="#FF000080")
             axi.figure.savefig(debug_out_dir / "2-closed-geom.pdf", bbox_inches="tight")
 
     identity_transform = rasterio.transform.Affine(1, 0, 0, 0, 1, 0)
