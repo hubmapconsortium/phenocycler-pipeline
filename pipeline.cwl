@@ -22,6 +22,10 @@ outputs:
     outputSource: collect_output/pipeline_output
     type: Directory
     label: "Expressions and segmentation masks in OME-TIFF format"
+  crop_debug_data:
+    outputSource: crop_image/crop_debug_data
+    type: Directory?
+    label: "Debug data from GeoJSON image cropping"
 
 steps:
   convert_to_bioformats:
@@ -40,6 +44,7 @@ steps:
         source: data_dir
     out:
      - crop_ome_tiff
+     - crop_debug_data
     run: steps/crop_input_image.cwl
 
   collect_dataset_info:
