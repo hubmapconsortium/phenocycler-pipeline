@@ -16,6 +16,8 @@ inputs:
     type: File?
   channels_path:
     type: File?
+  invert_geojson_mask:
+    type: boolean?
 
 outputs:
   pipeline_output:
@@ -42,6 +44,8 @@ steps:
         source: convert_to_bioformats/ome_tiff
       dataset_dir:
         source: data_dir
+      invert_geojson_mask:
+        source: invert_geojson_mask
     out:
      - crop_ome_tiff
      - crop_debug_data
