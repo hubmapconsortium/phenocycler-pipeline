@@ -29,7 +29,13 @@ def find_geojson(directory: Path) -> Optional[Path]:
         return None
 
 
-def crop_geojson(image_path: Path, geojson_path: Path, padding: int, debug: bool):
+def crop_geojson(
+    image_path: Path,
+    geojson_path: Path,
+    padding: int,
+    exclude_mask_content: bool,
+    debug: bool,
+):
     debug_out_dir = Path("crop-debug")
 
     print("Reading image from", image_path)
@@ -70,7 +76,10 @@ def crop_geojson(image_path: Path, geojson_path: Path, padding: int, debug: bool
         [closed_geometry],
         image_data.shape[-2:],
         identity_transform,
-        invert=True,
+        # default behavior for this script is to only include the area
+        # contained in the mask, which corresponds to invert=True
+        # TODO: reconsider logic and semantics of arguments
+        invert=not exclude_mask_content,
     )
     print("Proportion of image selected:", mask.mean())
 
@@ -127,7 +136,12 @@ def crop_geojson(image_path: Path, geojson_path: Path, padding: int, debug: bool
     image_cropped.save(output_path)
 
 
-def crop_image(image_path: Path, dataset_directory: Path, debug: bool):
+def crop_image(
+    image_path: Path,
+    dataset_directory: Path,
+    invert_geojson_mask: bool,
+    debug: bool,
+):
     maybe_geojson_file = find_geojson(dataset_directory)
     if maybe_geojson_file is None:
         # TODO: use a better interface; the SectionAligner defaults
@@ -146,14 +160,26 @@ def crop_image(image_path: Path, dataset_directory: Path, debug: bool):
         check_call(command)
     else:
         print("Found GeoJSON file at", maybe_geojson_file)
-        crop_geojson(image_path, maybe_geojson_file, padding_default, debug)
+        crop_geojson(
+            image_path=image_path,
+            geojson_path=maybe_geojson_file,
+            padding=padding_default,
+            exclude_mask_content=invert_geojson_mask,
+            debug=debug,
+        )
 
 
 if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("image_path", type=Path)
     p.add_argument("dataset_dir", type=Path)
+    p.add_argument("--invert-geojson-mask", action="store_true")
     p.add_argument("--debug", action="store_true")
     args = p.parse_args()
 
-    crop_image(args.image_path, args.dataset_dir, args.debug)
+    crop_image(
+        image_path=args.image_path,
+        dataset_directory=args.dataset_dir,
+        invert_geojson_mask=args.invert_geojson_mask,
+        debug=args.debug,
+    )

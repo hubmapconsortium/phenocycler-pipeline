@@ -18,6 +18,11 @@ inputs:
     type: Directory
     inputBinding:
       position: 1
+  invert_geojson_mask:
+    type: boolean?
+    inputBinding:
+      position: 2
+      prefix: "--invert-geojson-mask"
 
 outputs:
   crop_ome_tiff:
