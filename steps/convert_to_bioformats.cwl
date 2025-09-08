@@ -7,7 +7,7 @@ requirements:
     dockerPull: hubmap/phenocycler-ometiff-convert
     dockerOutputDirectory: "/output"
 
-baseCommand: ["python", "/opt/convert_to_bioformats.py"]
+baseCommand: ["/opt/convert_to_bioformats.py"]
 
 inputs:
   data_dir:
