@@ -1,1 +1,2 @@
-hubmap/phenocycler-scripts	Dockerfile	base_directory_build
+hubmap/phenocycler-scripts	docker/main/Dockerfile	base_directory_build
+hubmap/phenocycler-ometiff-convert	docker/ometiff-convert/Dockerfile	base_directory_build
