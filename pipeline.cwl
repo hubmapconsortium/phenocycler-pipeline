@@ -83,7 +83,7 @@ steps:
       pipeline_config:
         source: collect_dataset_info/pipeline_config
       ome_tiff:
-        source: crop_image/crop_ome_tiff
+        source: threshold_image/thresholded_ome_tiff
     out:
       - segmentation_channels
     run: steps/prepare_segmentation_channels.cwl
