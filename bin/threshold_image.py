@@ -4,8 +4,18 @@ from argparse import ArgumentParser
 from math import isnan
 from pathlib import Path
 from pprint import pprint
+from typing import NamedTuple, Optional
 
 import aicsimageio
+import numpy as np
+
+threshold_low_col_name = "threshold low"
+threshold_high_col_name = "threshold"
+
+
+class ClipData(NamedTuple):
+    low: dict[str, float]
+    high: dict[str, float]
 
 
 def find_channels_csv(dataset_dir: Path) -> Path:
@@ -22,32 +32,34 @@ def find_channels_csv(dataset_dir: Path) -> Path:
         raise ValueError("No channels CSV present")
 
 
-def parse_channel_thresholds(channels_csv: Path) -> dict[str, float]:
-    thresholds = {}
+def parse_channel_thresholds(channels_csv: Path) -> ClipData:
+    thresholds_low = {}
+    thresholds_high = {}
     with open(channels_csv, newline="") as f:
         r = csv.DictReader(f)
-        if "threshold" not in r:
-            return thresholds
         for line in r:
-            threshold = float(line["threshold"])
-            if not isnan(threshold):
-                thresholds[line["channel_id"]] = threshold
-    return thresholds
+            channel = line["channel_id"]
+            if not isnan(threshold_low := float(line.get(threshold_low_col_name, "nan"))):
+                thresholds_low[channel] = threshold_low
+            if not isnan(threshold_high := float(line.get(threshold_high_col_name, "nan"))):
+                thresholds_high[channel] = threshold_high
+    print("Thresholds, low:")
+    pprint(thresholds_low)
+    print("Thresholds, high:")
+    pprint(thresholds_high)
+    return ClipData(low=thresholds_low, high=thresholds_high)
 
 
 def main(ome_tiff_file: Path, dataset_dir: Path):
-    channels_csv = find_channels_csv(dataset_dir)
-    thresholds = parse_channel_thresholds(channels_csv)
-    print("Channels thresholds:")
-    pprint(thresholds)
     image = aicsimageio.AICSImage(ome_tiff_file)
+    channels_csv = find_channels_csv(dataset_dir)
+    clip_data = parse_channel_thresholds(channels_csv)
     for i, channel_id in enumerate(image.channel_names):
-        if channel_id in thresholds:
-            threshold = thresholds[channel_id]
-            print("Setting", channel_id, "pixels below", threshold, "to 0")
-            channel_data = image.data[:, i, :, :, :].copy()
-            channel_data[channel_data < threshold] = 0
-            image.data[:, i, :, :, :] = channel_data
+        min_value = clip_data.low.get(channel_id)
+        max_value = clip_data.high.get(channel_id)
+        print("Thresholding channel", channel_id, "with min", min_value, "and max", max_value)
+        channel_data = image.data[:, i, :, :, :].copy()
+        image.data[:, i, :, :, :] = np.clip(channel_data, min_value, max_value)
     image.save("image.ome.tiff")
 
 
