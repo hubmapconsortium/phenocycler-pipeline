@@ -59,6 +59,7 @@ steps:
         source: data_dir
     out:
       - thresholded_ome_tiff
+    run: steps/threshold_image.cwl
 
   collect_dataset_info:
     in:
