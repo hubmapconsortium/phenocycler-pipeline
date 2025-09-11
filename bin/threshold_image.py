@@ -4,10 +4,9 @@ from argparse import ArgumentParser
 from math import isnan
 from pathlib import Path
 from pprint import pprint
-from typing import NamedTuple, Optional
+from typing import NamedTuple
 
 import aicsimageio
-import numpy as np
 
 threshold_low_col_name = "threshold low"
 threshold_high_col_name = "threshold"
@@ -59,7 +58,11 @@ def main(ome_tiff_file: Path, dataset_dir: Path):
         max_value = clip_data.high.get(channel_id)
         print("Thresholding channel", channel_id, "with min", min_value, "and max", max_value)
         channel_data = image.data[:, i, :, :, :].copy()
-        image.data[:, i, :, :, :] = np.clip(channel_data, min_value, max_value)
+        # Different semantics for lower and upper thresholds, so no usage
+        # of something like `np.clip` with both values
+        channel_data[channel_data < min_value] = 0
+        channel_data[channel_data > max_value] = max_value
+        image.data[:, i, :, :, :] = channel_data
     image.save("image.ome.tiff")
 
 
