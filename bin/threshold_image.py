@@ -60,8 +60,10 @@ def main(ome_tiff_file: Path, dataset_dir: Path):
         channel_data = image.data[:, i, :, :, :].copy()
         # Different semantics for lower and upper thresholds, so no usage
         # of something like `np.clip` with both values
-        channel_data[channel_data < min_value] = 0
-        channel_data[channel_data > max_value] = max_value
+        if min_value is not None:
+            channel_data[channel_data < min_value] = 0
+        if max_value is not None:
+            channel_data[channel_data > max_value] = max_value
         image.data[:, i, :, :, :] = channel_data
     image.save("image.ome.tiff")
 
