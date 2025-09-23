@@ -51,6 +51,16 @@ steps:
      - crop_debug_data
     run: steps/crop_input_image.cwl
 
+  threshold_image:
+    in:
+      ome_tiff:
+        source: crop_image/crop_ome_tiff
+      dataset_dir:
+        source: data_dir
+    out:
+      - thresholded_ome_tiff
+    run: steps/threshold_image.cwl
+
   collect_dataset_info:
     in:
       data_dir:
@@ -60,7 +70,7 @@ steps:
       channels_path:
         source: channels_path
       ome_tiff:
-        source: crop_image/crop_ome_tiff
+        source: threshold_image/thresholded_ome_tiff
 
     out:
       - pipeline_config
@@ -73,7 +83,7 @@ steps:
       pipeline_config:
         source: collect_dataset_info/pipeline_config
       ome_tiff:
-        source: crop_image/crop_ome_tiff
+        source: threshold_image/thresholded_ome_tiff
     out:
       - segmentation_channels
     run: steps/prepare_segmentation_channels.cwl
