@@ -10,6 +10,7 @@ import aicsimageio
 
 threshold_low_col_name = "threshold low"
 threshold_high_col_name = "threshold"
+channel_id_columns = ["channel_id", "channel id"]
 
 
 class ClipData(NamedTuple):
@@ -31,16 +32,29 @@ def find_channels_csv(dataset_dir: Path) -> Path:
         raise ValueError("No channels CSV present")
 
 
+def get_channel_id_column_name(r: csv.DictReader) -> str:
+    field_name_set = set(r.fieldnames)
+    for column_possibility in channel_id_columns:
+        if column_possibility in field_name_set:
+            return column_possibility
+    message_pieces = ["Couldn't find channel ID column in CSV metadata. Tried:"]
+    message_pieces.extend(f"\t{c}" for c in channel_id_columns)
+    raise KeyError("")
+
+
 def parse_channel_thresholds(channels_csv: Path) -> ClipData:
     thresholds_low = {}
     thresholds_high = {}
-    with open(channels_csv, newline="") as f:
+    with open(channels_csv, newline="", encoding="utf-8-sig") as f:
         r = csv.DictReader(f)
+        channel_id_column = get_channel_id_column_name(r)
         for line in r:
-            channel = line["channel_id"]
-            if not isnan(threshold_low := float(line.get(threshold_low_col_name, "nan"))):
+            channel = line[channel_id_column]
+            if not isnan(threshold_low := float(line.get(threshold_low_col_name, "nan") or "nan")):
                 thresholds_low[channel] = threshold_low
-            if not isnan(threshold_high := float(line.get(threshold_high_col_name, "nan"))):
+            if not isnan(
+                threshold_high := float(line.get(threshold_high_col_name, "nan") or "nan")
+            ):
                 thresholds_high[channel] = threshold_high
     print("Thresholds, low:")
     pprint(thresholds_low)

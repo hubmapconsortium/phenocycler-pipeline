@@ -18,4 +18,4 @@ rasterio
 zarr<3
 numcodecs<0.16
 geopandas
-git+https://github.com/hubmapconsortium/ome-utils@v0.3.4
+git+https://github.com/hubmapconsortium/ome-utils@v0.3.5

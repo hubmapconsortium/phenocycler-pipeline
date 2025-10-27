@@ -63,7 +63,12 @@ def split_channels_into_tiles(
             )
 
 
-def main(segmentation_channels_dir: Path, pipeline_config_path: Path):
+def main(
+    segmentation_channels_dir: Path,
+    pipeline_config_path: Path,
+    tile_size: int,
+    tile_overlap: int,
+):
     out_dir = Path("output/new_tiles")
     pipeline_conf_dir = Path("output/pipeline_conf")
     out_dir.mkdir(exist_ok=True, parents=True)
@@ -71,14 +76,12 @@ def main(segmentation_channels_dir: Path, pipeline_config_path: Path):
 
     stitched_img_shape = get_stitched_image_shape(segmentation_channels_dir)
 
-    tile_size = 10000
-    overlap = 100
     print("Splitting images into tiles")
-    print("Tile size:", tile_size, "| overlap:", overlap)
-    split_channels_into_tiles(segmentation_channels_dir, out_dir, tile_size, overlap)
+    print("Tile size:", tile_size, "| overlap:", tile_overlap)
+    split_channels_into_tiles(segmentation_channels_dir, out_dir, tile_size, tile_overlap)
 
     modified_experiment = modify_pipeline_config(
-        pipeline_config_path, (tile_size, tile_size), overlap, stitched_img_shape
+        pipeline_config_path, (tile_size, tile_size), tile_overlap, stitched_img_shape
     )
     with open((p := "pipelineConfig.json"), "w") as f:
         print("Saving modified pipeline config to", p)
@@ -97,7 +100,22 @@ if __name__ == "__main__":
         type=Path,
         help="path to pipelineConfig.json file",
     )
+    parser.add_argument(
+        "--tile_size",
+        type=int,
+        default=10_000,
+    )
+    parser.add_argument(
+        "--tile_overlap",
+        type=int,
+        default=100,
+    )
 
     args = parser.parse_args()
 
-    main(args.segmentation_channels_dir, args.pipeline_config_path)
+    main(
+        segmentation_channels_dir=args.segmentation_channels_dir,
+        pipeline_config_path=args.pipeline_config_path,
+        tile_size=args.tile_size,
+        tile_overlap=args.tile_overlap,
+    )

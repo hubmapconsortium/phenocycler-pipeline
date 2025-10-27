@@ -3,7 +3,7 @@ class: CommandLineTool
 
 requirements:
   DockerRequirement:
-    dockerPull: hubmap/phenocycler-scripts:1.3
+    dockerPull: hubmap/phenocycler-scripts:latest
     dockerOutputDirectory: "/output"
 
 baseCommand: ["python", "/opt/slicing/run_slicing.py"]
@@ -19,6 +19,16 @@ inputs:
     type: File
     inputBinding:
       prefix: "--pipeline_config_path"
+
+  tile_size:
+    type: int?
+    inputBinding:
+      prefix: "--tile_size"
+
+  tile_overlap:
+    type: int?
+    inputBinding:
+      prefix: "--tile_overlap"
 
 outputs:
   sliced_tiles:
