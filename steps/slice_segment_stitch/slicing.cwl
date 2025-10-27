@@ -20,6 +20,16 @@ inputs:
     inputBinding:
       prefix: "--pipeline_config_path"
 
+  tile_size:
+    type: int?
+    inputBinding:
+      prefix: "--tile_size"
+
+  tile_overlap:
+    type: int?
+    inputBinding:
+      prefix: "--tile_overlap"
+
 outputs:
   sliced_tiles:
     type: Directory[]

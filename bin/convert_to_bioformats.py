@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
+import json
 import shlex
 from argparse import ArgumentParser
+from os import fspath
 from pathlib import Path
+from pprint import pprint
 from shutil import copy
 from subprocess import check_call
+from typing import Iterable
 
 from ome_utils import find_ome_tiffs
 
-output_path = "/output/converted.ome.tiff"
+output_dir = Path("/output")
+output_path_single = output_dir / "converted.ome.tiff"
 bioformats2raw_command_template = [
     "/opt/bioformats2raw/bin/bioformats2raw",
     "--resolutions",
@@ -20,8 +25,22 @@ bioformats2raw_command_template = [
 raw2ometiff_command = [
     "/opt/raw2ometiff/bin/raw2ometiff",
     "/output/converted.raw",
-    output_path,
+    fspath(output_path_single),
 ]
+
+
+def get_directory_manifest(paths: Iterable[Path]):
+    manifest = []
+    for path in paths:
+        manifest.append(
+            {
+                "class": "File",
+                "path": fspath(path),
+                "basename": fspath(path),
+            }
+        )
+
+    return manifest
 
 
 def find_qptiffs(input_directory: Path) -> list[Path]:
@@ -35,7 +54,10 @@ def find_qptiffs(input_directory: Path) -> list[Path]:
 
 def main(input_directory: Path):
     qptiffs = find_qptiffs(input_directory)
+    files = []
     if qptiffs:
+        if len(qptiffs) > 1:
+            raise NotImplementedError("Multiple QPTIFFs are not supported")
         bioformats2raw_command = [
             piece.format(input_qptiff=qptiffs[0]) for piece in bioformats2raw_command_template
         ]
@@ -43,13 +65,23 @@ def main(input_directory: Path):
         check_call(bioformats2raw_command)
         print("Running", raw2ometiff_command)
         check_call(raw2ometiff_command)
+        files.append(output_path_single)
     else:
-        print("No QPTIFFs found; using OME-TIFF")
-        ometiffs = list(find_ome_tiffs(input_directory))
+        print("No QPTIFFs found; using OME-TIFFs")
+        ometiffs = list(find_ome_tiffs(input_directory, recurse=True))
         if not ometiffs:
             raise ValueError("No OME-TIFFs found")
-        print("Copying", ometiffs[0], "to", output_path)
-        copy(ometiffs[0], output_path)
+        for ometiff in ometiffs:
+            relative_path = ometiff.relative_to(input_directory)
+            ometiff_output_file = output_dir / relative_path
+            ometiff_output_file.parent.mkdir(exist_ok=True, parents=True)
+            print("Copying", ometiff, "to", ometiff_output_file)
+            copy(ometiff, ometiff_output_file)
+            files.append(relative_path)
+    with open("manifest.json", "w") as f:
+        manifest = get_directory_manifest(files)
+        pprint(manifest)
+        json.dump(manifest, f)
 
 
 if __name__ == "__main__":

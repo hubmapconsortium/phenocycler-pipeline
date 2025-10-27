@@ -6,6 +6,7 @@ requirements:
   DockerRequirement:
     dockerPull: hubmap/phenocycler-ometiff-convert
     dockerOutputDirectory: "/output"
+  InlineJavascriptRequirement: {}
 
 baseCommand: ["/opt/convert_to_bioformats.py"]
 
@@ -17,6 +18,8 @@ inputs:
 
 outputs:
   ome_tiff:
-    type: File
+    type: File[]
     outputBinding:
-      glob: "/output/converted.ome.tiff"
+      glob: manifest.json
+      loadContents: True
+      outputEval: $(eval(self[0].contents))
