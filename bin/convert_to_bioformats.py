@@ -45,17 +45,26 @@ def get_directory_manifest(paths: Iterable[Path]):
 
 def find_qptiffs(input_directory: Path) -> list[Path]:
     qptiffs = list(input_directory.glob("raw/images/*.qptiff"))
-    if qptiffs:
-        print("Found QPTIFF image(s), running conversion")
-    else:
+    if not qptiffs:
         qptiffs = list(input_directory.glob("**/*.qptiff"))
     return qptiffs
 
 
 def main(input_directory: Path):
-    qptiffs = find_qptiffs(input_directory)
     files = []
-    if qptiffs:
+    qptiffs = find_qptiffs(input_directory)
+    ometiffs = list(find_ome_tiffs(input_directory, recurse=True))
+    if ometiffs:
+        print("Found OME-TIFF(s):")
+        pprint(ometiffs)
+        for ometiff in ometiffs:
+            relative_path = ometiff.relative_to(input_directory)
+            ometiff_output_file = output_dir / relative_path
+            ometiff_output_file.parent.mkdir(exist_ok=True, parents=True)
+            print("Copying", ometiff, "to", ometiff_output_file)
+            copy(ometiff, ometiff_output_file)
+            files.append(relative_path)
+    elif qptiffs:
         if len(qptiffs) > 1:
             raise NotImplementedError("Multiple QPTIFFs are not supported")
         bioformats2raw_command = [
@@ -67,17 +76,7 @@ def main(input_directory: Path):
         check_call(raw2ometiff_command)
         files.append(output_path_single)
     else:
-        print("No QPTIFFs found; using OME-TIFFs")
-        ometiffs = list(find_ome_tiffs(input_directory, recurse=True))
-        if not ometiffs:
-            raise ValueError("No OME-TIFFs found")
-        for ometiff in ometiffs:
-            relative_path = ometiff.relative_to(input_directory)
-            ometiff_output_file = output_dir / relative_path
-            ometiff_output_file.parent.mkdir(exist_ok=True, parents=True)
-            print("Copying", ometiff, "to", ometiff_output_file)
-            copy(ometiff, ometiff_output_file)
-            files.append(relative_path)
+        raise ValueError("No OME-TIFF or QPTIFF images found")
     with open("manifest.json", "w") as f:
         manifest = get_directory_manifest(files)
         pprint(manifest)
