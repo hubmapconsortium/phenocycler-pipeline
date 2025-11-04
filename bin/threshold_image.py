@@ -79,7 +79,13 @@ def main(ome_tiff_file: Path, dataset_dir: Path):
         if max_value is not None:
             channel_data[channel_data > max_value] = max_value
         image.data[:, i, :, :, :] = channel_data
-    image.save("image.ome.tiff")
+    image_new = aicsimageio.AICSImage(
+        image.data.squeeze(),
+        channel_names=image.channel_names,
+        dim_order="CYX",
+        physical_pixel_sizes=image.physical_pixel_sizes,
+    )
+    image_new.save("image.ome.tiff")
 
 
 if __name__ == "__main__":
