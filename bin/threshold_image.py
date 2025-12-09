@@ -85,7 +85,7 @@ def main(ome_tiff_file: Path, dataset_dir: Path):
         dim_order="CYX",
         physical_pixel_sizes=image.physical_pixel_sizes,
     )
-    image_new.save("image.ome.tiff")
+    image_new.save(ome_tiff_file.name)
 
 
 if __name__ == "__main__":

@@ -8,7 +8,7 @@ import tifffile as tif
 from modify_pipeline_config import modify_pipeline_config
 from slicer import slice_img
 
-filename_pattern = re.compile(r"^image_(?P<channel>\w+).tif$")
+filename_pattern = re.compile(r"^(?P<label>\w+)_(?P<channel>\w+).tif$")
 
 
 def path_to_str(path: Path):

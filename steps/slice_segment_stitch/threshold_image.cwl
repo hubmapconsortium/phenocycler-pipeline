@@ -23,4 +23,4 @@ outputs:
   thresholded_ome_tiff:
     type: File
     outputBinding:
-      glob: "image.ome.tiff"
+      glob: "*.ome.tiff"
