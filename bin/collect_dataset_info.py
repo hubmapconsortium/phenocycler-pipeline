@@ -156,6 +156,7 @@ def main(
         "pixel_size_y": y_size,
         "pixel_unit_x": x_unit,
         "pixel_unit_y": y_unit,
+        "image_name": first_img_path.name,
     }
 
     pipeline_config_path = out_dir / "pipeline_config.yaml"

@@ -72,17 +72,20 @@ def modify_and_save_img(
         )
 
 
-def collect_segm_masks(data_dir: Path, out_dir: Path):
-    filenames_copied = []
-    for image_file in data_dir.glob("**/*.ome.tiff"):
-        output_file = out_dir / image_file.name
-        shutil.copy(image_file, output_file)
-        filenames_copied.append(image_file.name)
-    return filenames_copied
+def collect_segm_mask(data_dir: Path, out_dir: Path, expr_name: str):
+    image_files = list(data_dir.glob("**/*.ome.tiff"))
+    assert len(image_files) == 1
+    image_file = image_files[0]
+    print("Found", image_file)
+    expr_name_pieces = expr_name.split(".", 0)
+    expr_name_pieces[0] += "_mask"
+    output_file = out_dir / ".".join(expr_name_pieces)
+    shutil.copy(image_file, output_file)
+    return output_file.name
 
 
 def collect_expr(
-    mask_filenames: list[str],
+    mask_filename: str,
     out_dir: Path,
     segmentation_channel_ids: dict[str, list[int]],
     channel_names: list[str],
@@ -92,11 +95,7 @@ def collect_expr(
     pixel_unit_y: str,
     ome_tiff: Path,
 ):
-    if len(mask_filenames) == 1:
-        new_filename = mask_filenames[0].replace("mask", "expr")
-    else:
-        filename_base = ome_tiff.name.split(".")[0]
-        new_filename = f"{filename_base}_expr.ome.tiff"
+    new_filename = mask_filename.replace("_mask", "_expr")
     output_file = out_dir / new_filename
 
     modify_and_save_img(
@@ -125,10 +124,10 @@ def main(mask_dir: Path, pipeline_config_path: Path, ome_tiff: Path):
     expr_out_dir.mkdir(exist_ok=True, parents=True)
 
     print("\nCollecting segmentation masks")
-    mask_filenames = collect_segm_masks(mask_dir, mask_out_dir)
+    mask_filename = collect_segm_mask(mask_dir, mask_out_dir, pipeline_config["image_name"])
     print("\nCollecting expressions")
     collect_expr(
-        mask_filenames=mask_filenames,
+        mask_filename=mask_filename,
         out_dir=expr_out_dir,
         segmentation_channel_ids=pipeline_config["segmentation_channel_ids"],
         channel_names=pipeline_config["channel_names"],

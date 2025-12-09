@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import shlex
 from argparse import ArgumentParser
+from os import rename
 from pathlib import Path
 from subprocess import check_call
 from typing import Optional
@@ -17,6 +18,8 @@ from skimage.measure import regionprops
 from utils import new_plot
 
 padding_default = 128
+output_path_base = Path("/output")
+output_filename_default = "aligned_tissue_0.ome.tif"
 
 
 def find_geojson(directory: Path) -> Optional[Path]:
@@ -130,10 +133,21 @@ def crop_geojson(
         physical_pixel_sizes=image.physical_pixel_sizes,
     )
 
-    output_path = Path("/output/aligned_tissue_0.ome.tif")
+    # Save to same filename as SectionAligner cropping, to rename
+    # in one place after all cropping is done
+    output_path = output_path_base / output_filename_default
     output_path.parent.mkdir(exist_ok=True, parents=True)
     print("Saving to", output_path)
     image_cropped.save(output_path)
+
+
+def rename_image(input_image: Path):
+    source_filename: str = input_image.name
+    if source_filename.endswith(".tif"):
+        source_filename += "f"
+    output_path = output_path_base / source_filename
+    print("Renaming output to", output_path.name)
+    rename(output_path_base / output_filename_default, output_path)
 
 
 def crop_image(
@@ -167,6 +181,7 @@ def crop_image(
             exclude_mask_content=invert_geojson_mask,
             debug=debug,
         )
+    rename_image(image_path)
 
 
 if __name__ == "__main__":

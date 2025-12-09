@@ -4,7 +4,7 @@ label: Threshold image using channels CSV data
 
 requirements:
   DockerRequirement:
-    dockerPull: hubmap/phenocycler-scripts:1.3.1
+    dockerPull: hubmap/phenocycler-scripts:latest
     dockerOutputDirectory: "/output"
 
 baseCommand: ["python", "/opt/threshold_image.py"]
@@ -23,4 +23,4 @@ outputs:
   thresholded_ome_tiff:
     type: File
     outputBinding:
-      glob: "image.ome.tiff"
+      glob: "*.ome.tiff"
