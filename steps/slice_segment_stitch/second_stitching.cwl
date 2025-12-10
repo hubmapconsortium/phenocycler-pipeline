@@ -3,7 +3,7 @@ class: CommandLineTool
 
 requirements:
   DockerRequirement:
-    dockerPull: hubmap/phenocycler-scripts:1.4
+    dockerPull: hubmap/phenocycler-scripts:latest
     dockerOutputDirectory: /output
 
 baseCommand: ["python", "/opt/secondary_stitcher/secondary_stitcher_runner.py"]

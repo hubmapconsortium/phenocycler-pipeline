@@ -77,7 +77,7 @@ def collect_segm_mask(data_dir: Path, out_dir: Path, expr_name: str):
     assert len(image_files) == 1
     image_file = image_files[0]
     print("Found", image_file)
-    expr_name_pieces = expr_name.split(".", 0)
+    expr_name_pieces = expr_name.split(".", 1)
     expr_name_pieces[0] += "_mask"
     output_file = out_dir / ".".join(expr_name_pieces)
     shutil.copy(image_file, output_file)
