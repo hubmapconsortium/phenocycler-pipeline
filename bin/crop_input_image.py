@@ -139,6 +139,8 @@ def crop_geojson(
     output_path.parent.mkdir(exist_ok=True, parents=True)
     print("Saving to", output_path)
     image_cropped.save(output_path)
+    # Rename immediately to avoid OS error
+    rename_image(output_path)
 
 
 def rename_image(input_image: Path):
@@ -181,7 +183,6 @@ def crop_image(
             exclude_mask_content=invert_geojson_mask,
             debug=debug,
         )
-    rename_image(image_path)
 
 
 if __name__ == "__main__":

@@ -49,7 +49,9 @@ def parse_channel_thresholds(channels_csv: Path) -> ClipData:
         r = csv.DictReader(f)
         channel_id_column = get_channel_id_column_name(r)
         for line in r:
+            print(line)
             channel = line[channel_id_column]
+            print(channel)
             if not isnan(threshold_low := float(line.get(threshold_low_col_name, "nan") or "nan")):
                 thresholds_low[channel] = threshold_low
             if not isnan(
