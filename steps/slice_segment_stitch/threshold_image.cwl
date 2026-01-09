@@ -4,7 +4,7 @@ label: Threshold image using channels CSV data
 
 requirements:
   DockerRequirement:
-    dockerPull: hubmap/phenocycler-scripts:latest
+    dockerPull: hubmap/phenocycler-scripts:1.4.2
     dockerOutputDirectory: "/output"
 
 baseCommand: ["python", "/opt/threshold_image.py"]

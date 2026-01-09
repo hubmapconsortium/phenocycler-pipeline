@@ -4,7 +4,7 @@ label: Prepare images for segmentation
 
 requirements:
   DockerRequirement:
-    dockerPull: hubmap/phenocycler-scripts:latest
+    dockerPull: hubmap/phenocycler-scripts:1.4.2
     dockerOutputDirectory: "/output"
 
 baseCommand: ["python", "/opt/prepare_segmentation_channels.py"]
