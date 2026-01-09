@@ -28,7 +28,7 @@ outputs:
   crop_ome_tiff:
     type: File
     outputBinding:
-      glob: "/output/aligned_tissue_0.ome.tif*"
+      glob: "/output/results/*.ome.tiff"
   crop_debug_data:
     type: Directory?
     outputBinding:
