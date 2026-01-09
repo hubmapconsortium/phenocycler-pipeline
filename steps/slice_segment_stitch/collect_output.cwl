@@ -4,7 +4,7 @@ label: Collect segmentation masks and images for the final output
 
 requirements:
   DockerRequirement:
-    dockerPull: hubmap/phenocycler-scripts:1.4.1
+    dockerPull: hubmap/phenocycler-scripts:latest
     dockerOutputDirectory: "/output"
 
 baseCommand: ["python", "/opt/collect_output.py"]

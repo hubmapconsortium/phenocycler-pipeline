@@ -120,6 +120,7 @@ def slice_img(
     task = []
     for i, img in enumerate(this_plane_tiles):
         base = out_dir / this_plane_img_names[i]
+        print("Saving ", base)
         base.parent.mkdir(exist_ok=True, parents=True)
         task.append(
             dask.delayed(tif.imwrite)(
