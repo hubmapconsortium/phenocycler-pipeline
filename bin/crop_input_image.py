@@ -174,6 +174,7 @@ def crop_image(
         ]
         print("Running", shlex.join(command))
         check_call(command)
+        rename_image(image_path)
     else:
         print("Found GeoJSON file at", maybe_geojson_file)
         crop_geojson(
