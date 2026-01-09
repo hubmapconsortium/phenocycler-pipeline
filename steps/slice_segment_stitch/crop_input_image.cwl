@@ -4,7 +4,7 @@ label: Crop image to tissue selection, either detected or read from GeoJSON
 
 requirements:
   DockerRequirement:
-    dockerPull: hubmap/phenocycler-scripts:1.4.2
+    dockerPull: hubmap/phenocycler-scripts:latest
     dockerOutputDirectory: "/output"
 
 baseCommand: ["python", "/opt/crop_input_image.py", "--debug"]
@@ -28,7 +28,7 @@ outputs:
   crop_ome_tiff:
     type: File
     outputBinding:
-      glob: "/output/aligned_tissue_0.ome.tif*"
+      glob: "/output/results/*.ome.tiff"
   crop_debug_data:
     type: Directory?
     outputBinding:

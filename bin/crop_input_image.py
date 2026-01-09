@@ -3,6 +3,7 @@ import shlex
 from argparse import ArgumentParser
 from os import rename
 from pathlib import Path
+from shutil import copy2
 from subprocess import check_call
 from typing import Optional
 
@@ -18,7 +19,7 @@ from skimage.measure import regionprops
 from utils import new_plot
 
 padding_default = 128
-output_path_base = Path("/output")
+output_path_base = Path("/output/results")
 output_filename_default = "aligned_tissue_0.ome.tif"
 
 
@@ -168,7 +169,7 @@ def crop_image(
             "python",
             "/opt/section_aligner.py",
             "--crop_only",
-            "--output_dir=/output",
+            "--output_dir=/output/results",
             "--num_tissue=1",
             f"--input_path={image_path}",
         ]
