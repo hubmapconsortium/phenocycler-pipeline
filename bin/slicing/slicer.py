@@ -117,12 +117,9 @@ def slice_img(
         tile_h=tile_size,
         overlap=overlap,
     )
-    print(this_plane_img_names)
-    # print(this_plane_tiles)
 
     task = []
     for i, img in enumerate(this_plane_tiles):
-        print("i:", i)
         base = out_dir / this_plane_img_names[i]
         print("Saving ", base)
         base.parent.mkdir(exist_ok=True, parents=True)
