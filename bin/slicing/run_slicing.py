@@ -8,7 +8,7 @@ import tifffile as tif
 from modify_pipeline_config import modify_pipeline_config
 from slicer import slice_img
 
-filename_pattern = re.compile(r"^(?P<label>\w+)_(?P<channel>\w+).tif$")
+filename_pattern = re.compile(r"^(?P<label>.+)_(?P<channel>\w+)\.tif$")
 
 
 def path_to_str(path: Path):
@@ -52,6 +52,7 @@ def split_channels_into_tiles(
     for file_path in input_dir.iterdir():
         if m := filename_pattern.match(file_path.name):
             channel_name = m.group("channel")
+            print("channel_name:", channel_name)
 
             slice_img(
                 file_path,

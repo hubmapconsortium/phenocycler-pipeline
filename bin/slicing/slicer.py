@@ -109,6 +109,7 @@ def slice_img(
     zplane: int,
     channel_name: str,
 ):
+    print("Made it to slicer, in_path:", in_path)
     this_plane_tiles, this_plane_img_names = split_by_size(
         tif.imread(in_path),
         channel_name=channel_name,
@@ -116,8 +117,6 @@ def slice_img(
         tile_h=tile_size,
         overlap=overlap,
     )
-    print(this_plane_img_names)
-    # print(this_plane_tiles)
 
     task = []
     for i, img in enumerate(this_plane_tiles):
