@@ -50,8 +50,10 @@ def split_channels_into_tiles(
     overlap=50,
 ):
     for file_path in input_dir.iterdir():
+        print("file_path:", file_path)
         if m := filename_pattern.match(file_path.name):
             channel_name = m.group("channel")
+            print("channel_name:", channel_name)
 
             slice_img(
                 file_path,
