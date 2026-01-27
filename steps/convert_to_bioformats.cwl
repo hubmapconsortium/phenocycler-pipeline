@@ -4,7 +4,7 @@ label: Convert a QPTiff file to a raw file
 
 requirements:
   DockerRequirement:
-    dockerPull: hubmap/phenocycler-ometiff-convert:1.4.4
+    dockerPull: hubmap/phenocycler-ometiff-convert
     dockerOutputDirectory: "/output"
   InlineJavascriptRequirement: {}
 
