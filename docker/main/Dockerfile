@@ -5,6 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get -qq update \
     && apt-get -qq install --no-install-recommends --yes \
     git \
+    libglx-mesa0 \
     python3 \
     python3-dev \
     python3-pip \
