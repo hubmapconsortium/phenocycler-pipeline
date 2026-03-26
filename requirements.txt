@@ -4,7 +4,9 @@ pandas
 dask
 imagecodecs
 tifffile
-aicsimageio
+bioio
+bioio-ome-tiff
+bioio-tifffile
 lxml
 matplotlib
 scikit-image

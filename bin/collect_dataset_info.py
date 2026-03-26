@@ -6,7 +6,7 @@ from pathlib import Path
 from pprint import pprint
 from typing import Optional
 
-import aicsimageio
+import bioio
 import tifffile as tif
 import yaml
 from ome_utils import get_physical_size_quantities
@@ -134,7 +134,7 @@ def main(
     # tsv_path = data_dir.glob("*.ome.tsv")
     # x_size, y_size, x_unit, y_unit = get_pixel_size_from_tsv(tsv_path)
 
-    channel_names = [str(c) for c in aicsimageio.AICSImage(first_img_path).channel_names]
+    channel_names = [str(c) for c in bioio.BioImage(first_img_path).channel_names]
     channels_metadata = get_channel_metadata(data_dir, channels_path)
 
     if channels_metadata is None:
