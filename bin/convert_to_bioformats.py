@@ -53,7 +53,12 @@ def find_qptiffs(input_directory: Path) -> list[Path]:
 def main(input_directory: Path):
     files = []
     qptiffs = find_qptiffs(input_directory)
-    ometiffs = list(find_ome_tiffs(input_directory, recurse=True))
+    ometiffs = []
+    all_ometiffs = find_ome_tiffs(input_directory, recurse=True)
+    for ometiff in all_ometiffs:
+        # good thing these are relative paths already
+        if ometiff.parts[0] != "extras":
+            ometiffs.append(ometiff)
     if ometiffs:
         print("Found OME-TIFF(s):")
         pprint(ometiffs)
