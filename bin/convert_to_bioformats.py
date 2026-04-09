@@ -56,8 +56,8 @@ def main(input_directory: Path):
     ometiffs = []
     all_ometiffs = find_ome_tiffs(input_directory, recurse=True)
     for ometiff in all_ometiffs:
-        # good thing these are relative paths already
-        if ometiff.parts[0] != "extras":
+        ometiff_relative = ometiff.relative_to(input_directory)
+        if ometiff_relative.parts[0] != "extras":
             ometiffs.append(ometiff)
     if ometiffs:
         print("Found OME-TIFF(s):")
