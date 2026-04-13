@@ -39,7 +39,7 @@ def get_channel_id_column_name(r: csv.DictReader) -> str:
             return column_possibility
     message_pieces = ["Couldn't find channel ID column in CSV metadata. Tried:"]
     message_pieces.extend(f"\t{c}" for c in channel_id_columns)
-    raise KeyError("")
+    raise KeyError("\n".join(message_pieces))
 
 
 def parse_channel_thresholds(channels_csv: Path) -> ClipData:
