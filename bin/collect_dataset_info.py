@@ -92,8 +92,10 @@ def get_channel_metadata(data_dir: Path, channels_path: Path) -> Optional[dict[s
     if channels_path is not None and not channels_path.exists():
         print("Error no " + str(channels_path))
     if channels_path is None:
-        for file in data_dir.glob("**/*.channels.csv"):
-            channels_path = file
+        for channels_file in data_dir.glob("**/*.channels.csv"):
+            if channels_file.relative_to(data_dir).parts[0] == "extras":
+                continue
+            channels_path = channels_file
         if channels_path is None:
             print("No *.channels.csv file found in " + str(data_dir))
             return None
