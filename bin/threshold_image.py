@@ -19,7 +19,10 @@ class ClipData(NamedTuple):
 
 
 def find_channels_csv(dataset_dir: Path) -> Path:
-    channels_csvs = list(dataset_dir.glob("**/*channels.csv"))
+    channels_csvs = []
+    for channels_csv in dataset_dir.glob("**/*channels.csv"):
+        if channels_csv.relative_to(dataset_dir).parts[0] != "extras":
+            channels_csvs.append(channels_csv)
     if len(channels_csvs) == 1:
         print("Found channels CSV:", channels_csvs[0].relative_to(dataset_dir))
         return channels_csvs[0]
