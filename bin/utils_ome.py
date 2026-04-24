@@ -83,14 +83,13 @@ def convert_size_to_nm(px_node: ET.Element):
 def blank_tiffdata(px_node: ET.Element):
     tiffdata_list = []
     for td in px_node.findall("TiffData"):
-        count = int(td.get("PlaneCount"))
+        count = int(td.get("PlaneCount", 0))
         td.clear()
         tiffdata_list.append(td)
-        if count > 1:
-            for x in range(1, count):
-                child_td = ET.Element("TiffData")
-                px_node.insert(px_node.index(td) + x, child_td)
-                tiffdata_list.append(child_td)
+        for x in range(1, count):
+            child_td = ET.Element("TiffData")
+            px_node.insert(px_node.index(td) + x, child_td)
+            tiffdata_list.append(child_td)
     return tiffdata_list
 
 

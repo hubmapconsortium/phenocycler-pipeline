@@ -6,7 +6,7 @@ from typing import Optional
 
 import numpy as np
 import tifffile as tif
-from aicsimageio import AICSImage
+from bioio import BioImage
 from ome_types import from_tiff
 from ome_types.model import StructuredAnnotationList
 
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_omexml(ome_tiff: Path) -> Optional[str]:
-    image = AICSImage(ome_tiff)
+    image = BioImage(ome_tiff)
     original_channels = image.channel_names
     if original_channels is None:
         return None

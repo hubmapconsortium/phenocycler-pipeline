@@ -6,7 +6,7 @@ from pathlib import Path
 from pprint import pprint
 from typing import Optional
 
-import aicsimageio
+import bioio
 import tifffile as tif
 import yaml
 from ome_utils import get_physical_size_quantities
@@ -37,18 +37,6 @@ def get_pixel_size_from_img(img: Path) -> tuple[float, float, str, str]:
     pixel_size_y = dimensions["Y"].magnitude
     pixel_unit_x = format(dimensions["X"].units, "~")
     pixel_unit_y = format(dimensions["Y"].units, "~")
-    return pixel_size_x, pixel_size_y, pixel_unit_x, pixel_unit_y
-
-
-def get_pixel_size_from_tsv(tsvpath: Path) -> tuple[float, float, str, str]:
-    with open(tsvpath) as tsvfile:
-        reader = csv.DictReader(tsvfile, delimiter="\t")
-        for row in reader:
-            pixel_size_x = float(row["pixel_size_x_value"])
-            pixel_size_y = float(row["pixel_size_y_value"])
-            pixel_unit_x = row["pixel_size_x_unit"]
-            pixel_unit_y = row["pixel_size_y_unit"]
-
     return pixel_size_x, pixel_size_y, pixel_unit_x, pixel_unit_y
 
 
@@ -129,12 +117,7 @@ def main(
 
     x_size, y_size, x_unit, y_unit = get_pixel_size_from_img(first_img_path)
 
-    # for image_file in data_dir.glob("*.tsv"):
-    #   tsv_path = image_file
-    # tsv_path = data_dir.glob("*.ome.tsv")
-    # x_size, y_size, x_unit, y_unit = get_pixel_size_from_tsv(tsv_path)
-
-    channel_names = [str(c) for c in aicsimageio.AICSImage(first_img_path).channel_names]
+    channel_names = [str(c) for c in bioio.BioImage(first_img_path).channel_names]
     channels_metadata = get_channel_metadata(data_dir, channels_path)
 
     if channels_metadata is None:

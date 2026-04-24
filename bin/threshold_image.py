@@ -6,7 +6,7 @@ from pathlib import Path
 from pprint import pprint
 from typing import NamedTuple
 
-import aicsimageio
+import bioio
 
 threshold_low_col_name = "threshold low"
 threshold_high_col_name = "threshold"
@@ -67,7 +67,7 @@ def parse_channel_thresholds(channels_csv: Path) -> ClipData:
 
 
 def main(ome_tiff_file: Path, dataset_dir: Path):
-    image = aicsimageio.AICSImage(ome_tiff_file)
+    image = bioio.BioImage(ome_tiff_file)
     channels_csv = find_channels_csv(dataset_dir)
     clip_data = parse_channel_thresholds(channels_csv)
     for i, channel_id in enumerate(image.channel_names):
@@ -82,7 +82,7 @@ def main(ome_tiff_file: Path, dataset_dir: Path):
         if max_value is not None:
             channel_data[channel_data > max_value] = max_value
         image.data[:, i, :, :, :] = channel_data
-    image_new = aicsimageio.AICSImage(
+    image_new = bioio.BioImage(
         image.data.squeeze(),
         channel_names=image.channel_names,
         dim_order="CYX",

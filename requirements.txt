@@ -4,7 +4,9 @@ pandas
 dask
 imagecodecs
 tifffile
-aicsimageio
+bioio
+bioio-ome-tiff
+bioio-tifffile
 lxml
 matplotlib
 scikit-image
@@ -15,7 +17,7 @@ pint
 jsonschema
 optuna
 rasterio
-zarr<3
-numcodecs<0.16
+zarr
+numcodecs
 geopandas
-git+https://github.com/hubmapconsortium/ome-utils@v0.3.5
+git+https://github.com/hubmapconsortium/ome-utils@v0.3.6

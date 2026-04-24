@@ -7,7 +7,7 @@ from shutil import copy2
 from subprocess import check_call
 from typing import Optional
 
-import aicsimageio
+import bioio
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -43,7 +43,7 @@ def crop_geojson(
     debug_out_dir = Path("crop-debug")
 
     print("Reading image from", image_path)
-    image = aicsimageio.AICSImage(image_path)
+    image = bioio.BioImage(image_path)
     image_data = image.data
     print("Shape:", image_data.shape)
 
@@ -135,8 +135,8 @@ def crop_geojson(
             axi = plt.imshow(image_data_cropped_sum_log1p, cmap="gray")
             axi.figure.savefig(debug_out_dir / "6-masked.pdf", bbox_inches="tight")
 
-    print("Instantiating new AICSImage")
-    image_cropped = aicsimageio.AICSImage(
+    print(f"Instantiating new {bioio.BioImage}")
+    image_cropped = bioio.BioImage(
         image_data_cropped,
         channel_names=image.channel_names,
         physical_pixel_sizes=image.physical_pixel_sizes,
