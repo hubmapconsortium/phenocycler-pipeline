@@ -2,6 +2,7 @@ import argparse
 import logging
 import shutil
 from pathlib import Path
+from shutil import copy
 from typing import Optional
 
 import numpy as np
@@ -142,6 +143,10 @@ def main(
         pixel_unit_y=pipeline_config["pixel_unit_y"],
         ome_tiff=ome_tiff,
     )
+    channels_csv = find_channels_csv(dataset_dir)
+    (channels_csv_output_dir := Path("channels_csv")).mkdir(exist_ok=True, parents=True)
+    print("Copying", channels_csv, "to", channels_csv_output_dir)
+    copy(channels_csv, channels_csv_output_dir)
 
 
 if __name__ == "__main__":
