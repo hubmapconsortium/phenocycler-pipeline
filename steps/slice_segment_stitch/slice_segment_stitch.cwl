@@ -34,6 +34,10 @@ outputs:
     outputSource: crop_image/crop_debug_data
     type: Directory?
     label: "Debug data from GeoJSON image cropping"
+  channels_csv_dir:
+    outputSource: collect_output/channels_csv_dir
+    type: Directory
+    label: "Directory containing channels CSV files from source dataset"
 
 steps:
   crop_image:
@@ -132,6 +136,9 @@ steps:
         source: collect_dataset_info/pipeline_config
       ome_tiff:
         source: crop_image/crop_ome_tiff
+      dataset_dir:
+        source: source_dataset_dir
     out:
       - pipeline_output
+      - channels_csv_dir
     run: collect_output.cwl

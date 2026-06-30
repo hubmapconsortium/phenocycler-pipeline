@@ -67,4 +67,5 @@ steps:
     out:
       - pipeline_output
       - crop_debug_data
+      - channels_csv_dir
     run: steps/slice_segment_stitch/slice_segment_stitch.cwl
