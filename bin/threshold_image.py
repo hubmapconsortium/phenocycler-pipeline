@@ -8,6 +8,8 @@ from typing import NamedTuple
 
 import bioio
 
+from utils import find_channels_csv
+
 threshold_low_col_name = "threshold low"
 threshold_high_col_name = "threshold"
 channel_id_columns = ["channel_id", "channel id"]
@@ -16,23 +18,6 @@ channel_id_columns = ["channel_id", "channel id"]
 class ClipData(NamedTuple):
     low: dict[str, float]
     high: dict[str, float]
-
-
-def find_channels_csv(dataset_dir: Path) -> Path:
-    channels_csvs = []
-    for channels_csv in dataset_dir.glob("**/*channels.csv"):
-        if channels_csv.relative_to(dataset_dir).parts[0] != "extras":
-            channels_csvs.append(channels_csv)
-    if len(channels_csvs) == 1:
-        print("Found channels CSV:", channels_csvs[0].relative_to(dataset_dir))
-        return channels_csvs[0]
-    elif len(channels_csvs) > 1:
-        message_pieces = ["Found multiple channels CSV files:"]
-        for channels_csv in channels_csvs:
-            message_pieces.append(f"\t{channels_csv.relative_to(dataset_dir)}")
-        raise ValueError("\n".join(message_pieces))
-    else:
-        raise ValueError("No channels CSV present")
 
 
 def get_channel_id_column_name(r: csv.DictReader) -> str:
