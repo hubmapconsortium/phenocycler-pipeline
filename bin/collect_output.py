@@ -2,6 +2,7 @@ import argparse
 import logging
 import shutil
 from pathlib import Path
+from shutil import copy
 from typing import Optional
 
 import numpy as np
@@ -10,7 +11,7 @@ from bioio import BioImage
 from ome_types import from_tiff
 from ome_types.model import StructuredAnnotationList
 
-from utils import read_pipeline_config
+from utils import find_channels_csv, read_pipeline_config
 from utils_ome import modify_initial_ome_meta
 
 Image = np.ndarray
@@ -115,7 +116,12 @@ def collect_ome_tiff(ome_tiff: Path, out_dir: Path):
     shutil.copy(ome_tiff, output_file)
 
 
-def main(mask_dir: Path, pipeline_config_path: Path, ome_tiff: Path):
+def main(
+    mask_dir: Path,
+    pipeline_config_path: Path,
+    ome_tiff: Path,
+    dataset_dir: Path,
+):
     pipeline_config = read_pipeline_config(pipeline_config_path)
     out_dir = Path("/output/pipeline_output")
     mask_out_dir = out_dir / "mask"
@@ -137,6 +143,10 @@ def main(mask_dir: Path, pipeline_config_path: Path, ome_tiff: Path):
         pixel_unit_y=pipeline_config["pixel_unit_y"],
         ome_tiff=ome_tiff,
     )
+    channels_csv = find_channels_csv(dataset_dir)
+    (channels_csv_output_dir := Path("channels_csv")).mkdir(exist_ok=True, parents=True)
+    print("Copying", channels_csv, "to", channels_csv_output_dir)
+    copy(channels_csv, channels_csv_output_dir)
 
 
 if __name__ == "__main__":
@@ -144,10 +154,13 @@ if __name__ == "__main__":
     parser.add_argument("--mask_dir", type=Path, help="path to directory with segmentation masks")
     parser.add_argument("--pipeline_config", type=Path, help="path to region map file YAML")
     parser.add_argument("--ome_tiff", type=Path, help="path to the converted ome.tiff file")
+    parser.add_argument("--dataset_dir", type=Path, help="path to the source dataset")
+
     args = parser.parse_args()
 
     main(
         mask_dir=args.mask_dir,
         pipeline_config_path=args.pipeline_config,
         ome_tiff=args.ome_tiff,
+        dataset_dir=args.dataset_dir,
     )

@@ -22,9 +22,17 @@ inputs:
     type: File
     inputBinding:
       prefix: "--ome_tiff"
+  dataset_dir:
+    type: Directory
+    inputBinding:
+      prefix: "--dataset_dir"
 
 outputs:
   pipeline_output:
     type: Directory
     outputBinding:
       glob: "/output/pipeline_output"
+  channels_csv_dir:
+    type: Directory
+    outputBinding:
+      glob: "/output/channels_csv"
