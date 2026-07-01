@@ -1,5 +1,10 @@
 [
 	{
+		"pattern": "channels_csv/(.*)\\.csv",
+		"description": "Channel metadata in CSV format",
+		"edam_ontology_term": "EDAM_1.24.format_3752"
+	},
+	{
 		"pattern": "pipeline_output/expr/(?P<image>.+)\\.ome\\.tiff",
 		"description": "Expression output for image {image}, in OME-TIFF format",
 		"edam_ontology_term": "EDAM_1.24.format_3727",
