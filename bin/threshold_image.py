@@ -4,7 +4,7 @@ from argparse import ArgumentParser
 from math import isnan
 from pathlib import Path
 from pprint import pprint
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 
 import bioio
 
@@ -26,11 +26,14 @@ class ClipData(NamedTuple):
 def get_column_name(
     r: csv.DictReader,
     column_possibilities: list[str],
-) -> str:
+    required: bool = True,
+) -> Optional[str]:
     field_name_set = set(r.fieldnames)
     for column_possibility in column_possibilities:
         if column_possibility in field_name_set:
             return column_possibility
+    if not required:
+        return
     message_pieces = ["Couldn't find column in CSV metadata. Tried:"]
     message_pieces.extend(f"\t{c}" for c in column_possibilities)
     raise KeyError("\n".join(message_pieces))
@@ -42,11 +45,20 @@ def parse_channel_thresholds(channels_csv: Path) -> ClipData:
     with open(channels_csv, newline="", encoding="utf-8-sig") as f:
         r = csv.DictReader(f)
         channel_id_column = get_column_name(r, channel_id_columns)
-        threshold_low_column = get_column_name(r, threshold_low_col_names)
+        threshold_low_column = get_column_name(r, threshold_low_col_names, required=False)
         for line in r:
             channel = line[channel_id_column]
-            if not isnan(threshold_low := float(line.get(threshold_low_column, "nan") or "nan")):
-                thresholds_low[channel] = threshold_low
+            if threshold_low_column is not None:
+                try:
+                    if not isnan(threshold_low := float(line[threshold_low_column] or "nan")):
+                        thresholds_low[channel] = threshold_low
+                except ValueError:
+                    print(
+                        "Skipping value",
+                        line[threshold_low_column],
+                        "for column",
+                        threshold_low_column,
+                    )
             if not isnan(
                 threshold_high := float(line.get(threshold_high_col_name, "nan") or "nan")
             ):
