@@ -53,16 +53,27 @@ def parse_channel_thresholds(channels_csv: Path) -> ClipData:
                     if not isnan(threshold_low := float(line[threshold_low_column] or "nan")):
                         thresholds_low[channel] = threshold_low
                 except ValueError:
+                    # if we fail to parse, we know the column is present
                     print(
                         "Skipping value",
                         line[threshold_low_column],
                         "for column",
                         threshold_low_column,
                     )
-            if not isnan(
-                threshold_high := float(line.get(threshold_high_col_name, "nan") or "nan")
-            ):
-                thresholds_high[channel] = threshold_high
+            try:
+                if not isnan(
+                    threshold_high := float(line.get(threshold_high_col_name, "nan") or "nan")
+                ):
+                    thresholds_high[channel] = threshold_high
+            except ValueError:
+                # if we fail to parse, we know the column is present
+                # TODO: deduplicate between low and high thresholds
+                print(
+                    "Skipping value",
+                    line[threshold_high_col_name],
+                    "for column",
+                    threshold_high_col_name,
+                )
     print("Thresholds, low:")
     pprint(thresholds_low)
     print("Thresholds, high:")
