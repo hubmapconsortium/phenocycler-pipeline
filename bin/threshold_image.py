@@ -4,13 +4,16 @@ from argparse import ArgumentParser
 from math import isnan
 from pathlib import Path
 from pprint import pprint
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 
 import bioio
 
 from utils import find_channels_csv
 
-threshold_low_col_name = "threshold low"
+threshold_low_col_names = [
+    "threshold low",
+    "minimum_threshold",
+]
 threshold_high_col_name = "threshold"
 channel_id_columns = ["channel_id", "channel id"]
 
@@ -20,13 +23,19 @@ class ClipData(NamedTuple):
     high: dict[str, float]
 
 
-def get_channel_id_column_name(r: csv.DictReader) -> str:
+def get_column_name(
+    r: csv.DictReader,
+    column_possibilities: list[str],
+    required: bool = True,
+) -> Optional[str]:
     field_name_set = set(r.fieldnames)
-    for column_possibility in channel_id_columns:
+    for column_possibility in column_possibilities:
         if column_possibility in field_name_set:
             return column_possibility
-    message_pieces = ["Couldn't find channel ID column in CSV metadata. Tried:"]
-    message_pieces.extend(f"\t{c}" for c in channel_id_columns)
+    if not required:
+        return
+    message_pieces = ["Couldn't find column in CSV metadata. Tried:"]
+    message_pieces.extend(f"\t{c}" for c in column_possibilities)
     raise KeyError("\n".join(message_pieces))
 
 
@@ -35,15 +44,36 @@ def parse_channel_thresholds(channels_csv: Path) -> ClipData:
     thresholds_high = {}
     with open(channels_csv, newline="", encoding="utf-8-sig") as f:
         r = csv.DictReader(f)
-        channel_id_column = get_channel_id_column_name(r)
+        channel_id_column = get_column_name(r, channel_id_columns)
+        threshold_low_column = get_column_name(r, threshold_low_col_names, required=False)
         for line in r:
             channel = line[channel_id_column]
-            if not isnan(threshold_low := float(line.get(threshold_low_col_name, "nan") or "nan")):
-                thresholds_low[channel] = threshold_low
-            if not isnan(
-                threshold_high := float(line.get(threshold_high_col_name, "nan") or "nan")
-            ):
-                thresholds_high[channel] = threshold_high
+            if threshold_low_column is not None:
+                try:
+                    if not isnan(threshold_low := float(line[threshold_low_column] or "nan")):
+                        thresholds_low[channel] = threshold_low
+                except ValueError:
+                    # if we fail to parse, we know the column is present
+                    print(
+                        "Skipping value",
+                        line[threshold_low_column],
+                        "for column",
+                        threshold_low_column,
+                    )
+            try:
+                if not isnan(
+                    threshold_high := float(line.get(threshold_high_col_name, "nan") or "nan")
+                ):
+                    thresholds_high[channel] = threshold_high
+            except ValueError:
+                # if we fail to parse, we know the column is present
+                # TODO: deduplicate between low and high thresholds
+                print(
+                    "Skipping value",
+                    line[threshold_high_col_name],
+                    "for column",
+                    threshold_high_col_name,
+                )
     print("Thresholds, low:")
     pprint(thresholds_low)
     print("Thresholds, high:")
